@@ -3,7 +3,16 @@
 // main() that prints per-test results and returns non-zero on failure.
 // The real project uses Catch2 v3 via CMake FetchContent; this header is
 // only present so the sandbox can compile and run the tests.
+//
+// When real Catch2 v3 is available on the include path (e.g. in CI via
+// CMake FetchContent), defer entirely to it so that both the macros and
+// main() come from one place, avoiding duplicate-symbol linker errors.
 #pragma once
+
+#if __has_include(<catch2/catch_all.hpp>)
+#  include <catch2/catch_all.hpp>
+#else
+
 #include <functional>
 #include <iostream>
 #include <string>
@@ -115,3 +124,5 @@ inline int run_all(int /*argc*/ = 0, char** /*argv*/ = nullptr) {
 int main(int argc, char* argv[]) {
     return ::Catch::run_all(argc, argv);
 }
+
+#endif // !__has_include(<catch2/catch_all.hpp>)

@@ -100,6 +100,8 @@ jobs:
             "pytest-cov>=5" \
             "pytest-xdist>=3" \
             "ruff>=0.4"
+          # tomllib is stdlib on Python 3.11+; install the backport for 3.10
+          python -c "import tomllib" 2>/dev/null || pip install tomli
 
       # ── 4. Ruff lint & format check ────────────────────────────────────────
       - name: Ruff lint
@@ -228,7 +230,11 @@ jobs:
       - name: Validate pyproject.toml
         run: |
           python - <<'EOF'
-          import tomllib, pathlib
+          try:
+              import tomllib          # Python 3.11+
+          except ImportError:
+              import tomli as tomllib # backport for Python 3.10
+          import pathlib
           data = tomllib.loads(pathlib.Path('pyproject.toml').read_text())
           assert data['project']['name'] == 'limit-order-book'
           assert 'dependencies' in data['project']
