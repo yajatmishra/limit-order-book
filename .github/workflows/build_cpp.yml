@@ -1,0 +1,210 @@
+# ──────────────────────────────────────────────────────────────────────────────
+#  build_cpp.yml
+#  Sigma Edge — C++ build and test matrix
+#
+#  Matrix
+#  ──────
+#    OS        : ubuntu-22.04 | macos-14 (Apple M-series runner)
+#    Compiler  : gcc-12 | clang-17
+#    Build type: Release | Debug (with ASan + UBSan)
+#
+#  Steps
+#  ─────
+#    1. Checkout
+#    2. Install compiler (Linux only; macOS uses Xcode CLT)
+#    3. Configure CMake (FetchContent pulls Catch2 v3.5.4)
+#    4. Build all targets
+#    5. Run CTest — uploads XML results as an artifact
+#    6. Upload the test binaries for debugging on failure
+#
+#  Triggers
+#  ────────
+#    push / pull_request  on  main | develop | 'release/**'
+# ──────────────────────────────────────────────────────────────────────────────
+
+name: "C++ Build & Tests"
+
+on:
+  push:
+    branches: [main, develop, "release/**"]
+    paths:
+      - "core/**"
+      - "tests/cpp/**"
+      - "CMakeLists.txt"
+      - ".github/workflows/build_cpp.yml"
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "core/**"
+      - "tests/cpp/**"
+      - "CMakeLists.txt"
+      - ".github/workflows/build_cpp.yml"
+  workflow_dispatch:       # manual trigger from the GitHub UI
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+# ── Matrix definition ─────────────────────────────────────────────────────────
+jobs:
+  build-and-test:
+    name: "${{ matrix.os }} / ${{ matrix.compiler }} / ${{ matrix.build_type }}"
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # ── Ubuntu: GCC Release ───────────────────────────────────────────
+          - os:           ubuntu-22.04
+            compiler:     gcc-12
+            cc:           gcc-12
+            cxx:          g++-12
+            build_type:   Release
+            sanitize:     OFF
+
+          # ── Ubuntu: GCC Debug + ASan ──────────────────────────────────────
+          - os:           ubuntu-22.04
+            compiler:     gcc-12
+            cc:           gcc-12
+            cxx:          g++-12
+            build_type:   Debug
+            sanitize:     ON
+
+          # ── Ubuntu: Clang Release ─────────────────────────────────────────
+          - os:           ubuntu-22.04
+            compiler:     clang-17
+            cc:           clang-17
+            cxx:          clang++-17
+            build_type:   Release
+            sanitize:     OFF
+
+          # ── Ubuntu: Clang Debug + ASan ────────────────────────────────────
+          - os:           ubuntu-22.04
+            compiler:     clang-17
+            cc:           clang-17
+            cxx:          clang++-17
+            build_type:   Debug
+            sanitize:     ON
+
+          # ── macOS: AppleClang Release ─────────────────────────────────────
+          - os:           macos-14
+            compiler:     apple-clang
+            cc:           clang
+            cxx:          clang++
+            build_type:   Release
+            sanitize:     OFF
+
+          # ── macOS: AppleClang Debug ───────────────────────────────────────
+          - os:           macos-14
+            compiler:     apple-clang
+            cc:           clang
+            cxx:          clang++
+            build_type:   Debug
+            sanitize:     ON
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      # ── 1. Checkout ──────────────────────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      # ── 2a. Install GCC (Ubuntu) ─────────────────────────────────────────────
+      - name: Install GCC 12 (Ubuntu)
+        if: startsWith(matrix.os, 'ubuntu') && startsWith(matrix.compiler, 'gcc')
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y gcc-12 g++-12
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 100
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 100
+
+      # ── 2b. Install Clang (Ubuntu) ────────────────────────────────────────────
+      - name: Install Clang 17 (Ubuntu)
+        if: startsWith(matrix.os, 'ubuntu') && startsWith(matrix.compiler, 'clang')
+        run: |
+          wget -qO- https://apt.llvm.org/llvm.sh | sudo bash -s -- 17 all
+          sudo ln -sf /usr/bin/clang-17   /usr/local/bin/clang
+          sudo ln -sf /usr/bin/clang++-17 /usr/local/bin/clang++
+
+      # ── 3. Restore / seed CMake + Catch2 FetchContent cache ──────────────────
+      - name: Cache CMake build artefacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            build/_deps
+            ~/.cache/CPM
+          key: cmake-${{ matrix.os }}-${{ matrix.compiler }}-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: cmake-${{ matrix.os }}-${{ matrix.compiler }}-
+
+      # ── 4. Configure ─────────────────────────────────────────────────────────
+      - name: CMake Configure
+        env:
+          CC:  ${{ matrix.cc }}
+          CXX: ${{ matrix.cxx }}
+        run: |
+          cmake -S . -B build \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DSIGMA_SANITIZE=${{ matrix.sanitize }} \
+            -DCMAKE_C_COMPILER=${{ matrix.cc }} \
+            -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+      # ── 5. Build ──────────────────────────────────────────────────────────────
+      - name: Build
+        run: cmake --build build --config ${{ matrix.build_type }} --parallel $(nproc 2>/dev/null || sysctl -n hw.logicalcpu)
+
+      # ── 6. Test ───────────────────────────────────────────────────────────────
+      - name: CTest
+        working-directory: build
+        env:
+          ASAN_OPTIONS:  halt_on_error=1:detect_leaks=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+        run: |
+          ctest \
+            --build-config ${{ matrix.build_type }} \
+            --output-on-failure \
+            --output-junit ctest-results.xml \
+            --parallel $(nproc 2>/dev/null || sysctl -n hw.logicalcpu)
+
+      # ── 7. Upload test results ─────────────────────────────────────────────────
+      - name: Upload CTest XML results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: "ctest-results-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.build_type }}"
+          path: build/ctest-results.xml
+          retention-days: 14
+
+      # ── 8. Upload binaries on failure ──────────────────────────────────────────
+      - name: Upload test binaries on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: "test-binaries-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.build_type }}"
+          path: |
+            build/test_lob
+            build/test_itch_parser
+            build/test_ring_buffer
+            build/test_event_bus
+          retention-days: 3
+
+  # ── Summary badge job ──────────────────────────────────────────────────────
+  summary:
+    name: "C++ CI Summary"
+    needs: build-and-test
+    if: always()
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Report
+        run: |
+          echo "## C++ Build Matrix Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| ${{ needs.build-and-test.result }} |" >> $GITHUB_STEP_SUMMARY

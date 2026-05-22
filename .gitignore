@@ -1,0 +1,36 @@
+# C++ build artifacts
+build/
+build-debug/
+*.o
+*.a
+*.so
+*.dylib
+compile_commands.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+.eggs/
+htmlcov/
+coverage.xml
+.coverage
+.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Data files (large binaries — don't commit)
+data/*.gz
+data/*.parquet
+data/*.db
+*.NASDAQ_ITCH50
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store

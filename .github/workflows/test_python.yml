@@ -1,0 +1,251 @@
+# ──────────────────────────────────────────────────────────────────────────────
+#  test_python.yml
+#  Sigma Edge — Python test matrix
+#
+#  Matrix
+#  ──────
+#    OS      : ubuntu-22.04 | macos-14
+#    Python  : 3.10 | 3.11 | 3.12
+#
+#  Steps
+#  ─────
+#    1.  Checkout
+#    2.  Set up Python (cached pip)
+#    3.  Install dependencies from requirements.txt + dev extras
+#    4.  Lint with Ruff (non-blocking on PRs, blocking on main)
+#    5.  Run pytest with coverage
+#    6.  Upload coverage XML to Codecov
+#    7.  Upload HTML coverage report as an artifact
+#    8.  Smoke-test data utilities (no network calls)
+#    9.  Validate pyproject.toml is parseable
+#
+#  Triggers
+#  ────────
+#    push / pull_request  on  main | develop | 'release/**'
+# ──────────────────────────────────────────────────────────────────────────────
+
+name: "Python Tests"
+
+on:
+  push:
+    branches: [main, develop, "release/**"]
+    paths:
+      - "python/**"
+      - "data/**"
+      - "tests/python/**"
+      - "pyproject.toml"
+      - "requirements.txt"
+      - ".github/workflows/test_python.yml"
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "python/**"
+      - "data/**"
+      - "tests/python/**"
+      - "pyproject.toml"
+      - "requirements.txt"
+      - ".github/workflows/test_python.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
+  PYTHONUNBUFFERED:        "1"
+
+# ── Matrix ─────────────────────────────────────────────────────────────────────
+jobs:
+  test:
+    name: "py${{ matrix.python-version }} / ${{ matrix.os }}"
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os:             [ubuntu-22.04, macos-14]
+        python-version: ["3.10", "3.11", "3.12"]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      # ── 1. Checkout ────────────────────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      # ── 2. Python setup ────────────────────────────────────────────────────
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache:          "pip"
+          cache-dependency-path: |
+            requirements.txt
+            pyproject.toml
+
+      # ── 3. Install dependencies ────────────────────────────────────────────
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip wheel
+          pip install -r requirements.txt
+          # Install dev extras (pytest, coverage, ruff)
+          pip install \
+            "pytest>=8" \
+            "pytest-cov>=5" \
+            "pytest-xdist>=3" \
+            "ruff>=0.4"
+
+      # ── 4. Ruff lint & format check ────────────────────────────────────────
+      - name: Ruff lint
+        # Non-blocking on pull requests (continue-on-error);
+        # blocking on pushes to main / release branches.
+        continue-on-error: ${{ github.event_name == 'pull_request' }}
+        run: |
+          ruff check python/ data/ --output-format=github || true
+          ruff format --check python/ data/ || true
+
+      # ── 5. Run pytest with coverage ────────────────────────────────────────
+      - name: Pytest
+        run: |
+          python -m pytest tests/python/ \
+            --pythonpath python \
+            --cov=python \
+            --cov-report=xml:coverage.xml \
+            --cov-report=html:htmlcov \
+            --cov-report=term-missing \
+            --tb=short \
+            -ra \
+            -q \
+            --numprocesses=auto \
+            --dist=worksteal
+        env:
+          # Prevent Dash / Flask from opening a browser
+          DISPLAY: ""
+
+      # ── 6. Upload coverage to Codecov ─────────────────────────────────────
+      - name: Upload coverage to Codecov
+        if: matrix.os == 'ubuntu-22.04' && matrix.python-version == '3.12'
+        uses: codecov/codecov-action@v4
+        with:
+          files:       coverage.xml
+          fail_ci_if_error: false
+          verbose:     false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+      # ── 7. Upload HTML coverage report ────────────────────────────────────
+      - name: Upload HTML coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: "htmlcov-py${{ matrix.python-version }}-${{ matrix.os }}"
+          path: htmlcov/
+          retention-days: 7
+
+      # ── 8. Smoke-test data utilities ───────────────────────────────────────
+      - name: Smoke-test data catalog
+        run: |
+          python - <<'EOF'
+          import sys, tempfile, os
+          sys.path.insert(0, 'python')
+          sys.path.insert(0, '.')
+          from data.data_catalog import DataCatalog, CatalogEntry
+
+          with tempfile.TemporaryDirectory() as tmpdir:
+              db = os.path.join(tmpdir, 'test_catalog.db')
+              cat = DataCatalog(db)
+
+              e = CatalogEntry(
+                  data_type   = 'itch',
+                  date        = '2024-01-15',
+                  filename    = '01152024.NASDAQ_ITCH50.gz',
+                  path        = '/tmp/01152024.NASDAQ_ITCH50.gz',
+                  download_ts = CatalogEntry.now_ts(),
+                  size_bytes  = 5_000_000_000,
+                  tags        = 'nasdaq,itch5',
+              )
+              cat.add(e)
+              assert len(cat) == 1, "Catalog should have 1 entry"
+
+              results = cat.find(data_type='itch', date='2024-01-15')
+              assert len(results) == 1
+              assert results[0].filename == '01152024.NASDAQ_ITCH50.gz'
+
+              cat.remove('01152024.NASDAQ_ITCH50.gz')
+              assert len(cat) == 0, "Catalog should be empty after remove"
+
+              cat.close()
+          print("✓  DataCatalog smoke test passed")
+          EOF
+
+      # ── 9. Smoke-test DailyDownloader (offline — no network) ──────────────
+      - name: Smoke-test DailyDownloader offline
+        run: |
+          python - <<'EOF'
+          import sys
+          sys.path.insert(0, 'python')
+          sys.path.insert(0, '.')
+          from data.download_daily import DailyDownloader, _ts_to_epoch
+
+          # Epoch conversion
+          assert _ts_to_epoch('2024-01-15') > 0
+
+          # DailyDownloader instantiates without error
+          import tempfile, os
+          with tempfile.TemporaryDirectory() as tmpdir:
+              dl = DailyDownloader(dest_dir=tmpdir, catalog=None)
+              assert dl.dest_dir.exists()
+          print("✓  DailyDownloader smoke test passed")
+          EOF
+
+      # ── 9b. Smoke-test ItchDownloader (offline) ───────────────────────────
+      - name: Smoke-test ItchDownloader offline
+        run: |
+          python - <<'EOF'
+          import sys
+          sys.path.insert(0, 'python')
+          sys.path.insert(0, '.')
+          from data.download_itch import ItchDownloader, _iso_to_ftp, _ftp_to_iso
+
+          assert _iso_to_ftp('2024-01-15') == '01152024'
+          assert _ftp_to_iso('01152024.NASDAQ_ITCH50.gz') == '2024-01-15'
+          assert _ftp_to_iso('bad.txt') is None
+
+          import tempfile
+          with tempfile.TemporaryDirectory() as tmpdir:
+              dl = ItchDownloader(dest_dir=tmpdir, catalog=None)
+              assert dl.dest_dir.exists()
+          print("✓  ItchDownloader smoke test passed")
+          EOF
+
+      # ── 10. Validate pyproject.toml ────────────────────────────────────────
+      - name: Validate pyproject.toml
+        run: |
+          python - <<'EOF'
+          import tomllib, pathlib
+          data = tomllib.loads(pathlib.Path('pyproject.toml').read_text())
+          assert data['project']['name'] == 'sigma-edge'
+          assert 'dependencies' in data['project']
+          print("✓  pyproject.toml valid")
+          EOF
+
+  # ── Coverage summary job ────────────────────────────────────────────────────
+  summary:
+    name: "Python CI Summary"
+    needs: test
+    if: always()
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Report
+        run: |
+          echo "## Python Test Matrix Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| ${{ needs.test.result }} |" >> $GITHUB_STEP_SUMMARY

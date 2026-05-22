@@ -1,0 +1,149 @@
+[build-system]
+requires      = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+# ── Project metadata ──────────────────────────────────────────────────────────
+[project]
+name        = "sigma-edge"
+version     = "0.3.0"
+description = "HFT signal engine — microstructure, signals, backtester, dashboard"
+readme      = "README.md"
+license     = { text = "MIT" }
+requires-python = ">=3.10"
+
+authors = [
+  { name = "Sigma Edge Contributors" },
+]
+
+keywords = [
+  "HFT", "algorithmic trading", "market microstructure",
+  "order book", "signal processing", "backtesting",
+]
+
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Financial and Insurance Industry",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Office/Business :: Financial",
+  "Topic :: Scientific/Engineering",
+]
+
+# ── Runtime dependencies ──────────────────────────────────────────────────────
+dependencies = [
+  # Core numeric stack
+  "numpy>=1.26,<3",
+  "scipy>=1.12",
+
+  # Data handling
+  "pandas>=2.2",
+  "pyarrow>=15",            # Parquet I/O
+
+  # Statistical modelling
+  "statsmodels>=0.14",
+
+  # Dashboard
+  "plotly>=5.22",
+  "dash>=2.17",
+
+  # HTTP & progress
+  "requests>=2.31",
+  "tqdm>=4.66",
+]
+
+# ── Optional extras ───────────────────────────────────────────────────────────
+[project.optional-dependencies]
+dev = [
+  "pytest>=8",
+  "pytest-cov>=5",
+  "pytest-xdist>=3",        # parallel test execution
+  "ruff>=0.4",              # linter + formatter
+  "mypy>=1.10",
+  "pre-commit>=3.7",
+]
+
+docs = [
+  "sphinx>=7",
+  "sphinx-rtd-theme>=2",
+  "myst-parser>=3",
+]
+
+research = [
+  "jupyter>=1.0",
+  "ipykernel>=6",
+  "matplotlib>=3.8",
+  "seaborn>=0.13",
+  "scikit-learn>=1.4",
+]
+
+all = ["sigma-edge[dev,docs,research]"]
+
+# ── CLI entry points ──────────────────────────────────────────────────────────
+[project.scripts]
+sigma-download-itch  = "data.download_itch:_main"
+sigma-download-daily = "data.download_daily:_main"
+sigma-catalog        = "data.data_catalog:_main"
+
+# ── Package discovery ─────────────────────────────────────────────────────────
+[tool.setuptools]
+package-dir = {"" = "python"}
+
+[tool.setuptools.packages.find]
+where = ["python"]
+
+# Also include the data utilities (located in project root data/)
+# We expose them separately so they are importable as `data.*`
+
+# ── Pytest configuration ──────────────────────────────────────────────────────
+[tool.pytest.ini_options]
+testpaths    = ["tests/python"]
+pythonpath   = ["python"]
+addopts      = "-ra -q --tb=short"
+filterwarnings = [
+  "ignore::RuntimeWarning",  # expected from empty-array edge cases
+]
+log_cli          = false
+log_level        = "WARNING"
+
+# ── Coverage ──────────────────────────────────────────────────────────────────
+[tool.coverage.run]
+source   = ["python"]
+omit     = ["python/dashboard/app.py", "*/tests/*", "*/__pycache__/*"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+precision    = 1
+
+# ── Ruff linter ───────────────────────────────────────────────────────────────
+[tool.ruff]
+line-length    = 100
+target-version = "py310"
+src            = ["python"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "ANN", "B", "SIM"]
+ignore = [
+  "ANN101",   # self type annotation (noisy)
+  "ANN401",   # use of Any
+  "B008",     # function call in default argument
+  "E501",     # line too long (handled by formatter)
+  "SIM108",   # ternary operator preference
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py"   = ["ANN", "S101"]
+"dashboard/*.py"  = ["ANN"]
+
+# ── Mypy ─────────────────────────────────────────────────────────────────────
+[tool.mypy]
+python_version    = "3.10"
+strict            = false
+ignore_missing_imports = true
+warn_return_any   = true
+warn_unused_ignores = true
+exclude           = ["tests/", "dashboard/"]
