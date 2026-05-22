@@ -14,9 +14,9 @@ This project is a quantitative trading research platform built around a low-late
 
 The system ingests raw NASDAQ ITCH 5.0 market data, reconstructs the full limit order book in real time, generates microstructure-based signals, simulates execution, and evaluates performance through an event-driven backtesting pipeline.
 
-**C++17 core** — limit order book reconstruction, binary ITCH 5.0 parsing, lock-free SPSC messaging, seqlock shared-memory snapshot publishing, typed event dispatch, and order/fill simulation.
+**C++17 core** : limit order book reconstruction, binary ITCH 5.0 parsing, lock-free SPSC messaging, seqlock shared-memory snapshot publishing, typed event dispatch, and order/fill simulation.
 
-**Python research stack** — market microstructure models, statistical signal research, walk-forward validation, execution algorithms, risk sizing, and a live Plotly Dash dashboard.
+**Python research stack** : market microstructure models, statistical signal research, walk-forward validation, execution algorithms, risk sizing, and a live Plotly Dash dashboard.
 
 The two layers communicate through a shared-memory seqlock interface, allowing Python models to consume real-time order book snapshots with minimal overhead.
 
@@ -60,13 +60,13 @@ The two layers communicate through a shared-memory seqlock interface, allowing P
 │  ├ queue_model      ├ cointegration     ├ regime_tester           │
 │  └ avellaneda_s     ├ kalman_pairs      └ tca.py                  │
 │                     ├ hmm_regime                                  │
-│  execution/         ├ garch_x           risk/                    │
+│  execution/         ├ garch_x           risk/                     │
 │  ├ market_impact    └ signal_combiner   ├ kelly_sizer.py          │
 │  ├ vwap.py                              ├ pnl_reporter.py         │
 │  ├ twap.py          backtester/         ├ position_tracker        │
 │  └ participation    ├ engine.py         └ circuit_breakers        │
 │                     ├ portfolio.py                                │
-│  dashboard/         └ tearsheet.py      data/                    │
+│  dashboard/         └ tearsheet.py      data/                     │
 │  ├ app.py                               ├ download_itch.py        │
 │  ├ lob_depth_chart                      ├ download_daily.py       │
 │  ├ ofi_panel                            └ data_catalog.py         │
