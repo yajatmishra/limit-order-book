@@ -1,39 +1,23 @@
-# Sigma Edge
+# C++17 Limit Order Book
+> Low latency C++17 trading core integrated with a Python research and execution stack
 
-> **HFT signal engine** — C++17 latency-critical core wired to a Python research stack covering microstructure, statistical signals, execution algorithms, risk management, event-driven backtesting, and a live Plotly Dash dashboard.
-
-[![C++ Build](https://img.shields.io/badge/C%2B%2B-Build%20%26%20Tests-blue?logo=github-actions)](https://github.com/sigma-edge/.github/workflows/build_cpp.yml)
-[![Python Tests](https://img.shields.io/badge/Python-416%20tests-green?logo=pytest)](https://github.com/sigma-edge/.github/workflows/test_python.yml)
-[![Python](https://img.shields.io/badge/python-3.10%20|%203.11%20|%203.12-blue)](https://www.python.org)
-[![C++17](https://img.shields.io/badge/C%2B%2B-17-blue)](https://en.cppreference.com/w/cpp/17)
+[![C++ Build](https://img.shields.io/badge/C%2B%2B-Build%20%26%20Tests-blue?logo=github-actions)](https://github.com/yajatmishra/limit-order-book/.github/workflows/build_cpp.yml)
+[![Python Tests](https://img.shields.io/badge/Python-416%20tests-green?logo=pytest)](https://github.com/yajatmishra/limit-order-book/.github/workflows/test_python.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ---
 
 ## Overview
 
-Sigma Edge is a full-stack quantitative trading research platform built to the standard expected by systematic shops (Citadel, Millennium, Point72). It demonstrates the complete pipeline from raw NASDAQ ITCH 5.0 feed parsing through market microstructure modelling, signal generation, execution optimisation, portfolio risk management, and interactive P&L attribution.
+This project is a quantitative trading research platform built around a low-latency C++17 market data and execution core with a Python research layer for modelling, simulation, and analysis. The system ingests raw NASDAQ ITCH 5.0 market data, reconstructs the limit order book in real time, generates microstructure-based signals, simulates execution, and evaluates strategy performance through an event-driven backtesting pipeline.
 
-The project is split across two layers by design:
+The architecture is split into two layers:
 
-**C++17 core** handles everything that must be sub-microsecond: the limit order book, the binary ITCH 5.0 parser, a lock-free SPSC ring buffer, a seqlock shared-memory snapshot writer, a type-safe event bus, and the order router / fill simulator.
+**C++17 core** : limit order book reconstruction, binary ITCH parsing, lock-free messaging, shared-memory snapshot publishing, event dispatch, and order/fill simulation
 
-**Python research stack** handles everything that benefits from iteration speed: microstructure models, statistical signals, validation frameworks, execution algorithms, risk metrics, and the Dash dashboard. The two layers communicate through the seqlock SHM interface so Python can consume real-time LOB snapshots without copying.
+**Python research stack** : signal research, statistical modelling, validation, execution logic, risk analysis, and dashboarding
 
----
-
-## Key Numbers
-
-| Metric | Value |
-|--------|-------|
-| Python tests passing | **416** |
-| Python LOC (src + data utilities) | **11,974** |
-| C++ LOC (core/) | **2,418** |
-| Test LOC (Python + C++) | **6,026** |
-| Total project LOC | **20,418** |
-| Python packages | **8** (microstructure, signals, validation, execution, risk, backtester, dashboard, data) |
-| C++ static libraries | **5** (core_lob, core_feed, core_shm, core_bus, core_exec) |
-| CI matrix jobs | **12** (6 C++ × compiler/OS/build-type + 6 Python × OS/version) |
+The two layers communicate through a shared-memory seqlock interface, allowing Python models to consume real-time order book snapshots with minimal overhead.
 
 ---
 
@@ -47,16 +31,16 @@ The project is split across two layers by design:
        │                │                  │
        ▼                ▼                  ▼
 ┌──────────────┐  ┌───────────┐   ┌───────────────────┐
-│ItchDownloader│  │DailyDown- │   │  itch_parser.cpp   │  C++17
-│download_itch │  │loader     │   │  pcap_replayer.cpp │  core
-│  .py         │  │.py        │   │  feed_handler.cpp  │
+│ItchDownloader│  │DailyDown- │   │  itch_parser.cpp  │  C++17
+│download_itch │  │loader     │   │  pcap_replayer.cpp│  core
+│  .py         │  │.py        │   │  feed_handler.cpp │
 └──────┬───────┘  └─────┬─────┘   └────────┬──────────┘
        │                │                  │ LOBSnapshot
        ▼                ▼                  ▼  (seqlock SHM)
   DataCatalog      Parquet store   ┌──────────────────────┐
-  (SQLite)         data/           │  limit_order_book.cpp │
-                                   │  price_level.cpp      │
-                                   │  order.hpp            │
+  (SQLite)         data/           │  limit_order_book.cpp│
+                                   │  price_level.cpp     │
+                                   │  order.hpp           │
                                    └────────┬─────────────┘
                                             │
                               ┌─────────────▼──────────────┐
@@ -69,27 +53,27 @@ The project is split across two layers by design:
                                             │  ShmReader
                                             ▼
 ┌───────────────────────────────────────────────────────────────┐
-│                    Python research stack                       │
+│                    Python research stack                      │
 │                                                               │
-│  microstructure/   signals/        validation/               │
-│  ├ ofi.py          ├ feature_pipeline.py  ├ purged_cv.py     │
-│  ├ pin_model.py    ├ mean_reversion.py    ├ walk_forward.py  │
-│  ├ spread_decomp   ├ momentum.py          ├ sharpe_deflator  │
-│  ├ queue_model     ├ cointegration.py     ├ regime_tester    │
-│  └ avellaneda_s    ├ kalman_pairs.py      └ tca.py           │
-│                    ├ hmm_regime.py                           │
-│  execution/        ├ garch_x.py          risk/              │
-│  ├ market_impact   └ signal_combiner     ├ kelly_sizer.py   │
-│  ├ vwap.py                               ├ pnl_reporter.py  │
-│  ├ twap.py         backtester/           ├ position_tracker │
-│  └ participation   ├ engine.py           └ circuit_breakers │
-│                    ├ portfolio.py                            │
-│  dashboard/        └ tearsheet.py        data/              │
-│  ├ app.py                                ├ download_itch.py │
-│  ├ lob_depth_chart ← live LOB depth      ├ download_daily   │
-│  ├ ofi_panel       ← OFI + price impact  └ data_catalog.py  │
-│  ├ pnl_panel       ← equity/drawdown                        │
-│  └ regime_panel    ← HMM state overlay                      │
+│  microstructure/   signals/        validation/                │
+│  ├ ofi.py          ├ feature_pipeline.py  ├ purged_cv.py      │
+│  ├ pin_model.py    ├ mean_reversion.py    ├ walk_forward.py   │
+│  ├ spread_decomp   ├ momentum.py          ├ sharpe_deflator   │
+│  ├ queue_model     ├ cointegration.py     ├ regime_tester     │
+│  └ avellaneda_s    ├ kalman_pairs.py      └ tca.py            │
+│                    ├ hmm_regime.py                            │
+│  execution/        ├ garch_x.py          risk/                │
+│  ├ market_impact   └ signal_combiner     ├ kelly_sizer.py     │
+│  ├ vwap.py                               ├ pnl_reporter.py    │
+│  ├ twap.py         backtester/           ├ position_tracker   │
+│  └ participation   ├ engine.py           └ circuit_breakers   │
+│                    ├ portfolio.py                             │
+│  dashboard/        └ tearsheet.py        data/                │
+│  ├ app.py                                ├ download_itch.py   │
+│  ├ lob_depth_chart ← live LOB depth      ├ download_daily     │
+│  ├ ofi_panel       ← OFI + price impact  └ data_catalog.py    │
+│  ├ pnl_panel       ← equity/drawdown                          │
+│  └ regime_panel    ← HMM state overlay                        │
 └───────────────────────────────────────────────────────────────┘
 ```
 
@@ -98,7 +82,7 @@ The project is split across two layers by design:
 ## Repository Layout
 
 ```
-sigma-edge/
+limit-order-book/
 ├── core/                          # C++17 latency-critical engine
 │   ├── lob/
 │   │   ├── order.hpp              # Order POD, Side enum
@@ -118,35 +102,35 @@ sigma-edge/
 │       └── fill_simulator.hpp/.cpp # Probabilistic fill model
 │
 ├── python/                        # Python research stack
-│   ├── microstructure/            # 5 modules, ~1,300 LOC
-│   ├── signals/                   # 8 modules, ~2,800 LOC
-│   ├── validation/                # 5 modules, ~1,100 LOC
-│   ├── execution/                 # 4 modules, ~900 LOC
-│   ├── risk/                      # 4 modules, ~800 LOC
-│   ├── backtester/                # 4 modules, ~1,200 LOC
-│   └── dashboard/                 # 5 modules, ~1,400 LOC
+│   ├── microstructure/            
+│   ├── signals/                   
+│   ├── validation/                
+│   ├── execution/                 
+│   ├── risk/                      
+│   ├── backtester/                
+│   └── dashboard/                 
 │
-├── data/                          # Data utilities (3 modules, ~700 LOC)
+├── data/                          # Data utilities
 │   ├── download_itch.py           # NASDAQ ITCH FTP downloader
 │   ├── download_daily.py          # Yahoo Finance v8 OHLCV downloader
 │   └── data_catalog.py            # SQLite-backed data catalog
 │
 ├── tests/
-│   ├── cpp/                       # 4 Catch2 test files, 2,546 LOC
+│   ├── cpp/                       # 4 Catch2 test files
 │   │   ├── test_lob.cpp
 │   │   ├── test_itch_parser.cpp
 │   │   ├── test_ring_buffer.cpp
 │   │   └── test_event_bus.cpp
-│   └── python/                    # 9 pytest modules, 3,480 LOC
-│       ├── test_ofi.py            # 33 tests
-│       ├── test_avellaneda_stoikov.py  # 19 tests (included in ofi suite)
-│       ├── test_kalman_pairs.py   # 43 tests
-│       ├── test_purged_cv.py      # 22 tests
-│       ├── test_walk_forward.py   # 29 tests
-│       ├── test_risk.py           # 86 tests
-│       ├── test_execution.py      # 53 tests
-│       ├── test_backtester.py     # 98 tests
-│       └── test_signals.py        # 33 tests (in avellaneda suite)
+│   └── python/                    
+│       ├── test_ofi.py            
+│       ├── test_avellaneda_stoikov.py  
+│       ├── test_kalman_pairs.py   
+│       ├── test_purged_cv.py     
+│       ├── test_walk_forward.py   
+│       ├── test_risk.py           
+│       ├── test_execution.py      
+│       ├── test_backtester.py     
+│       └── test_signals.py        
 │
 ├── CMakeLists.txt                 # CMake 3.20+, FetchContent Catch2 v3.5.4
 ├── pyproject.toml                 # PEP 517/518, pytest config, ruff config
@@ -216,7 +200,7 @@ Compile-time type-safe publish/subscribe bus using `std::variant<Fill, Quote, Ca
 
 **Queue Model** (`queue_model.py`) — Cont & de Larrard (2013) queue imbalance model. Estimates fill probability at the best bid/ask as a function of queue length ratio Q_b / Q_a. Returns `QueueResult` with fill probabilities at ±k ticks.
 
-**Avellaneda-Stoikov Market Making** (`avellaneda_stoikov.py`) — Stochastic-control optimal quoting. At mid=100, γ=0.1, σ=0.2, k=1.5, t_remaining=0.5: **bid = 99.3536, ask = 100.6464, spread = 1.2928**. Simulated over 252 steps (seed=42): **final PnL = 72.49, fill count = 112, Sharpe = 11.24**.
+**Avellaneda-Stoikov Market Making** (`avellaneda_stoikov.py`) — Stochastic-control optimal quoting. At mid=100, γ=0.1, σ=0.2, k=1.5, t_remaining=0.5: **bid = 99.3536, ask = 100.6464, spread = 1.2928**. Simulated over 252 steps (seed=42): **final PnL = 72.49, fill count = 112**.
 
 ### Signals (`python/signals/`)
 
@@ -320,7 +304,7 @@ SQLite-backed catalog for tracking downloaded files. Indexed on `(data_type, dat
 
 ```python
 from data.data_catalog import DataCatalog, CatalogEntry
-cat = DataCatalog("~/.sigma_edge/catalog.db")
+cat = DataCatalog("~/.limit_order_book/catalog.db")
 entry = CatalogEntry(data_type="itch", date="2024-01-15",
                      filename="01152024.NASDAQ_ITCH50.gz",
                      path="/data/itch/...", download_ts=CatalogEntry.now_ts(),
@@ -343,8 +327,8 @@ results = cat.find(data_type="itch", date="2024-01-15")
 ### C++ Build
 
 ```bash
-git clone https://github.com/you/sigma-edge.git
-cd sigma-edge
+git clone https://github.com/yajatmishra/limit-order-book.git
+cd limit-order-book
 
 cmake -S . -B build \
   -DCMAKE_BUILD_TYPE=Release \
@@ -398,7 +382,7 @@ PYTHONPATH=python pytest tests/python/test_backtester.py -v
 ### Running the Dashboard
 
 ```bash
-cd sigma-edge
+cd limit-order-book
 PYTHONPATH=python python python/dashboard/app.py
 # Open http://localhost:8050
 ```
