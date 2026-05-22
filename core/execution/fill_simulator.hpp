@@ -19,7 +19,7 @@
 #include <algorithm>
 #include <cstdint>
 
-namespace sigma_edge {
+namespace lob {
 
 // ── FillSimulatorConfig: lifted outside the class for the same reason as
 //    OrderRouterConfig — GCC requires the nested type to be complete before
@@ -75,4 +75,4 @@ private:
     void on_order_submitted(const OrderEvent& ev);
 };
 
-} // namespace sigma_edge
+} // namespace lob

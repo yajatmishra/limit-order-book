@@ -1,5 +1,5 @@
 """
-Sigma Edge – Dashboard package
+Limit Order Book – Dashboard package
 ================================
 Plotly Dash dashboard for visualising a live or replayed trading session.
 

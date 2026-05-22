@@ -1,7 +1,7 @@
 #include "price_level.hpp"
 #include <algorithm>
 
-namespace sigma_edge {
+namespace lob {
 
 PriceLevel::PriceLevel(uint64_t price) noexcept : price_(price) {}
 
@@ -35,4 +35,4 @@ std::pair<bool, bool> PriceLevel::execute_order(uint64_t order_id, uint32_t qty)
     return {true, false};      // found, partially consumed
 }
 
-} // namespace sigma_edge
+} // namespace lob

@@ -1,6 +1,6 @@
 #include "limit_order_book.hpp"
 
-namespace sigma_edge {
+namespace lob {
 
 // ── add ──────────────────────────────────────────────────────────────────────
 
@@ -126,4 +126,4 @@ std::vector<DepthLevel> LimitOrderBook::ask_depth(size_t levels) const {
     return depth;
 }
 
-} // namespace sigma_edge
+} // namespace lob

@@ -1,6 +1,6 @@
 #include "event_bus.hpp"
 
-namespace sigma_edge {
+namespace lob {
 
 // ── Global singleton SigmaEventBus ────────────────────────────────────────────
 // Lazily initialised; lives for the duration of the process.
@@ -11,4 +11,4 @@ SigmaEventBus& get_sigma_bus() {
     return instance;
 }
 
-} // namespace sigma_edge
+} // namespace lob

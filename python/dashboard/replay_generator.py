@@ -41,7 +41,7 @@ import numpy as np
 
 # ── Path bootstrap ─────────────────────────────────────────────────────────────
 _HERE = os.path.dirname(os.path.abspath(__file__))
-_PY   = os.path.join(_HERE, "..")           # sigma-edge/python/
+_PY   = os.path.join(_HERE, "..")
 if _PY not in sys.path:
     sys.path.insert(0, _PY)
 

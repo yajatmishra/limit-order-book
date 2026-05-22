@@ -22,7 +22,7 @@
 #include <functional>
 #include <variant>
 
-namespace sigma_edge {
+namespace lob {
 
 // ── MarketEvent types emitted by FeedHandler ─────────────────────────────────
 
@@ -91,4 +91,4 @@ private:
     void emit(const MarketEvent& ev);
 };
 
-} // namespace sigma_edge
+} // namespace lob

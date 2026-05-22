@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-namespace sigma_edge {
+namespace lob {
 
 enum class Side : uint8_t { BID = 0, ASK = 1 };
 
@@ -16,4 +16,4 @@ struct Order {
     uint64_t timestamp;  // nanoseconds since midnight
 };
 
-} // namespace sigma_edge
+} // namespace lob

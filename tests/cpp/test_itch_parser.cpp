@@ -7,7 +7,7 @@
 #include <vector>
 #include <variant>
 
-using namespace sigma_edge::itch;
+using namespace lob::itch;
 
 // ── Buffer-builder helpers ────────────────────────────────────────────────────
 
@@ -626,7 +626,7 @@ TEST_CASE("PcapReplayer: stats track packet and message counts", "[pcap]") {
 #include "../../core/lob/limit_order_book.hpp"
 
 TEST_CASE("ITCH AddOrder/OrderDelete round-trip into LOB", "[itch][lob]") {
-    using namespace sigma_edge;
+    using namespace lob;
 
     LimitOrderBook lob;
 

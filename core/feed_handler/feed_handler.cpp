@@ -1,6 +1,6 @@
 #include "feed_handler.hpp"
 
-namespace sigma_edge {
+namespace lob {
 
 using namespace itch;
 
@@ -153,4 +153,4 @@ void FeedHandler::process(const ItchMessage& msg) {
     }, msg);
 }
 
-} // namespace sigma_edge
+} // namespace lob

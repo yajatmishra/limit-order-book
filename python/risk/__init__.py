@@ -1,4 +1,4 @@
-# sigma-edge · python/risk
+# limit-order-book · python/risk
 from .kelly_sizer     import KellySizer, KellyResult, multi_asset_kelly
 from .circuit_breakers import (RiskGate, OrderEvent, CheckResult,
                                 MaxDrawdownBreaker, DailyLossBreaker,

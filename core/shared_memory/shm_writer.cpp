@@ -12,7 +12,7 @@
 #  define SIGMA_EDGE_HAVE_POSIX_SHM 1
 #endif
 
-namespace sigma_edge {
+namespace lob {
 
 // ── In-memory constructor (tests / embedded use) ──────────────────────────────
 
@@ -112,4 +112,4 @@ void ShmWriter::write_snapshot(const LimitOrderBook& lob, uint64_t ts_ns) {
     sl.fetch_add(1, std::memory_order_release);
 }
 
-} // namespace sigma_edge
+} // namespace lob

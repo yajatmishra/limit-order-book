@@ -1,10 +1,10 @@
 [build-system]
 requires      = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.backends.legacy:build"
+build-backend = "setuptools.build_meta"
 
 # ── Project metadata ──────────────────────────────────────────────────────────
 [project]
-name        = "sigma-edge"
+name        = "limit-order-book"
 version     = "0.3.0"
 description = "HFT signal engine — microstructure, signals, backtester, dashboard"
 readme      = "README.md"
@@ -12,7 +12,7 @@ license     = { text = "MIT" }
 requires-python = ">=3.10"
 
 authors = [
-  { name = "Sigma Edge Contributors" },
+  { name = "Limit Order Book Contributors" },
 ]
 
 keywords = [
@@ -80,13 +80,13 @@ research = [
   "scikit-learn>=1.4",
 ]
 
-all = ["sigma-edge[dev,docs,research]"]
+all = ["limit-order-book[dev,docs,research]"]
 
 # ── CLI entry points ──────────────────────────────────────────────────────────
 [project.scripts]
-sigma-download-itch  = "data.download_itch:_main"
-sigma-download-daily = "data.download_daily:_main"
-sigma-catalog        = "data.data_catalog:_main"
+lob-download-itch  = "data.download_itch:_main"
+lob-download-daily = "data.download_daily:_main"
+lob-catalog        = "data.data_catalog:_main"
 
 # ── Package discovery ─────────────────────────────────────────────────────────
 [tool.setuptools]

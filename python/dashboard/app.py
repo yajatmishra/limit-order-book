@@ -1,16 +1,16 @@
 """
-Sigma Edge — Plotly Dash Dashboard
-=====================================
+Limit Order Book — Plotly Dash Dashboard
+==========================================
 Entry point.  Run with:
 
-    cd sigma-edge/python
+    cd limit-order-book/python
     python dashboard/app.py            # development server on :8050
     python dashboard/app.py --port 8080 --debug
 
 Layout
 ------
   ┌──────────────────────────────────────────────────┐
-  │  SIGMA EDGE  ·  Session Replay Dashboard          │
+  │  LIMIT ORDER BOOK  ·  Session Replay Dashboard    │
   │  [symbol] [equity] [sharpe] [maxdd] [fills] ···  │
   ├────────────────────┬─────────────────────────────┤
   │  LOB Depth Chart   │  P&L Panel                   │
@@ -157,7 +157,7 @@ def _build_kpi_bar() -> html.Div:
 
 app = dash.Dash(
     __name__,
-    title = "Sigma Edge – Session Replay",
+    title = "Limit Order Book – Session Replay",
     meta_tags = [{"name": "viewport",
                   "content": "width=device-width, initial-scale=1"}],
 )
@@ -341,7 +341,7 @@ def advance_slider(
 # ═══════════════════════════════════════════════════════════════════════════════
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Sigma Edge Dashboard")
+    parser = argparse.ArgumentParser(description="Limit Order Book Dashboard")
     parser.add_argument("--port",  type=int, default=8050)
     parser.add_argument("--debug", action="store_true")
     parser.add_argument("--host",  default="0.0.0.0")

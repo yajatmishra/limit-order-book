@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.20)
 
 project(
-  sigma_edge
+  limit_order_book
   VERSION     0.3.0
-  DESCRIPTION "HFT signal engine — C++17 core + Python research stack"
+  DESCRIPTION "C++17 limit order book — core + Python research stack"
   LANGUAGES   CXX
 )
 
@@ -27,8 +27,8 @@ add_compile_options(
 )
 
 # Address + Undefined Sanitizers in Debug (disable for CI speed if needed)
-option(SIGMA_SANITIZE "Enable ASan + UBSan in Debug builds" ON)
-if(SIGMA_SANITIZE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+option(LOB_SANITIZE "Enable ASan + UBSan in Debug builds" ON)
+if(LOB_SANITIZE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
   add_compile_options(-fsanitize=address,undefined)
   add_link_options(   -fsanitize=address,undefined)
 endif()
@@ -38,10 +38,10 @@ find_package(Threads REQUIRED)
 
 # ── Catch2 via FetchContent ───────────────────────────────────────────────────
 # Offline CI: set FETCHCONTENT_FULLY_DISCONNECTED=ON and pre-populate the
-# cache, or set SIGMA_USE_SYSTEM_CATCH2=ON to link a system-installed Catch2.
-option(SIGMA_USE_SYSTEM_CATCH2 "Use system Catch2 instead of FetchContent" OFF)
+# cache, or set LOB_USE_SYSTEM_CATCH2=ON to link a system-installed Catch2.
+option(LOB_USE_SYSTEM_CATCH2 "Use system Catch2 instead of FetchContent" OFF)
 
-if(SIGMA_USE_SYSTEM_CATCH2)
+if(LOB_USE_SYSTEM_CATCH2)
   find_package(Catch2 3 REQUIRED)
 else()
   include(FetchContent)
@@ -104,9 +104,9 @@ target_include_directories(core_exec PUBLIC ${CMAKE_SOURCE_DIR})
 target_link_libraries(core_exec PUBLIC core_lob core_bus)
 set_target_properties(core_exec PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-# ── sigma_edge (umbrella static lib, links everything) ────────────────────────
-add_library(sigma_edge INTERFACE)
-target_link_libraries(sigma_edge INTERFACE
+# ── lob (umbrella interface lib, links everything) ────────────────────────────
+add_library(lob INTERFACE)
+target_link_libraries(lob INTERFACE
   core_lob
   core_feed
   core_shm
@@ -122,7 +122,7 @@ target_link_libraries(sigma_edge INTERFACE
 enable_testing()
 
 # Helper function: add one test exe, link it, register with CTest/Catch
-function(sigma_add_test target source)
+function(lob_add_test target source)
   add_executable(${target} ${source})
   # Our test files include "../../third_party/catch.hpp" which is a v1/v2
   # compatibility shim.  For Catch2 v3 the real headers are needed.
@@ -136,27 +136,27 @@ function(sigma_add_test target source)
 endfunction()
 
 # ── LOB tests ─────────────────────────────────────────────────────────────────
-sigma_add_test(test_lob
+lob_add_test(test_lob
   tests/cpp/test_lob.cpp
   core_lob
 )
 
 # ── ITCH parser + pcap replayer tests ────────────────────────────────────────
-sigma_add_test(test_itch_parser
+lob_add_test(test_itch_parser
   tests/cpp/test_itch_parser.cpp
   core_feed
 )
 
 # ── Ring buffer / FeedHandler / ShmWriter tests ───────────────────────────────
-sigma_add_test(test_ring_buffer
+lob_add_test(test_ring_buffer
   tests/cpp/test_ring_buffer.cpp
   core_feed core_shm Threads::Threads
 )
 
 # ── Event bus / OrderRouter / FillSimulator tests ─────────────────────────────
-sigma_add_test(test_event_bus
+lob_add_test(test_event_bus
   tests/cpp/test_event_bus.cpp
-  sigma_edge
+  lob
 )
 
 # ════════════════════════════════════════════════════════════════════════════════
@@ -173,7 +173,7 @@ install(
 
 install(
   DIRECTORY   core/
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/sigma_edge
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/lob
   FILES_MATCHING PATTERN "*.hpp"
 )
 
@@ -182,11 +182,11 @@ install(
 # ════════════════════════════════════════════════════════════════════════════════
 
 message(STATUS "")
-message(STATUS "  ── Sigma Edge ${PROJECT_VERSION} ──────────────────────────")
+message(STATUS "  ── Limit Order Book ${PROJECT_VERSION} ──────────────────────")
 message(STATUS "  Build type      : ${CMAKE_BUILD_TYPE}")
 message(STATUS "  Compiler        : ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
-message(STATUS "  Sanitizers      : ${SIGMA_SANITIZE}")
-message(STATUS "  System Catch2   : ${SIGMA_USE_SYSTEM_CATCH2}")
+message(STATUS "  Sanitizers      : ${LOB_SANITIZE}")
+message(STATUS "  System Catch2   : ${LOB_USE_SYSTEM_CATCH2}")
 message(STATUS "  Install prefix  : ${CMAKE_INSTALL_PREFIX}")
 message(STATUS "──────────────────────────────────────────────────────")
 message(STATUS "")

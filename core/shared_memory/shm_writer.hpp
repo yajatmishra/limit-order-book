@@ -35,7 +35,7 @@
 #include <string>
 #include <stdexcept>
 
-namespace sigma_edge {
+namespace lob {
 
 // ── On-wire constants ─────────────────────────────────────────────────────────
 inline constexpr uint64_t kShmMagic   = 0x5349474D45444745ULL; // "SIGMEDGE"
@@ -77,7 +77,7 @@ public:
 
     // ── Production POSIX shm constructor ─────────────────────────────────────
     // Creates or opens a POSIX shared memory object at /shm_name (e.g.
-    // "/sigma_edge_lob").  Throws std::runtime_error on failure.
+    // "/lob").  Throws std::runtime_error on failure.
     explicit ShmWriter(const std::string& shm_name,
                        size_t depth = kShmMaxDepth);
 
@@ -133,4 +133,4 @@ inline bool shm_read_snapshot(const ShmLayout* layout, ShmSnapshot& out) noexcep
     return (layout->header.magic == kShmMagic);
 }
 
-} // namespace sigma_edge
+} // namespace lob

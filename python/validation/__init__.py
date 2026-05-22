@@ -1,4 +1,4 @@
-# sigma-edge · python/validation
+# limit-order-book · python/validation
 from .walk_forward    import WalkForwardCV, WalkForwardSplit
 from .purged_cv       import PurgedKFold, PurgedFold
 from .tca             import TCA, TCAResult, TradeCost

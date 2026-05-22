@@ -8,7 +8,7 @@
 #include <vector>
 #include <numeric>
 
-using namespace sigma_edge;
+using namespace lob;
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 

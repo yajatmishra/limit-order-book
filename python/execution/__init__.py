@@ -1,4 +1,4 @@
-# sigma-edge · python/execution
+# limit-order-book · python/execution
 from .twap              import TWAPScheduler, TWAPSlice, TWAPResult, simulate_twap
 from .vwap              import VWAPScheduler, VWAPSlice, VWAPResult, simulate_vwap, u_shaped_profile
 from .participation_rate import ParticipationRateExecutor, POVFill, POVResult

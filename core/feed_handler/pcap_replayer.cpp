@@ -4,7 +4,7 @@
 #include <vector>
 #include <cstring>
 
-namespace sigma_edge {
+namespace lob {
 namespace itch {
 
 // ── host-endian helpers ───────────────────────────────────────────────────────
@@ -172,4 +172,4 @@ PcapReplayer::process_moldudp64(const uint8_t* payload, size_t payload_len,
 }
 
 } // namespace itch
-} // namespace sigma_edge
+} // namespace lob

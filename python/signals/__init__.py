@@ -1,4 +1,4 @@
-# sigma-edge · python/signals
+# limit-order-book · python/signals
 from .feature_pipeline  import FeaturePipeline, FeatureConfig
 from .mean_reversion    import estimate_ou, mean_reversion_zscore, OUResult
 from .momentum          import time_series_momentum, rsi, macd, cross_sectional_momentum

@@ -1,4 +1,4 @@
-# sigma-edge · python/microstructure
+# limit-order-book · python/microstructure
 from .ofi              import compute_ofi, compute_multi_level_ofi, normalized_ofi, rolling_ofi
 from .pin_model        import estimate_pin, vpin, PINResult
 from .spread_decomp    import roll_spread, kyle_lambda, amihud_illiquidity

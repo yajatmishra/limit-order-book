@@ -16,7 +16,7 @@
 #include <functional>
 #include <cstdint>
 
-namespace sigma_edge {
+namespace lob {
 
 // ── OrderRouterConfig: lifted outside the class so it can be used as a
 //    default argument (GCC requires the type to be complete at that point).
@@ -79,4 +79,4 @@ private:
     bool passes_risk(const SimOrder& order) const noexcept;
 };
 
-} // namespace sigma_edge
+} // namespace lob

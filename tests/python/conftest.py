@@ -1,6 +1,6 @@
 """
 pytest configuration: add python/ to sys.path so tests can
-import sigma_edge's Python packages without installation.
+import limit-order-book's Python packages without installation.
 """
 import sys
 import os

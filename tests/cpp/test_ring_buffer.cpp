@@ -10,8 +10,8 @@
 #include <numeric>
 #include <cstring>
 
-using namespace sigma_edge;
-using namespace sigma_edge::itch;
+using namespace lob;
+using namespace lob::itch;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //  SPSCRingBuffer — single-threaded correctness

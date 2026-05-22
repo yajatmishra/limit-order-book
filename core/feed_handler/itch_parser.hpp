@@ -12,7 +12,7 @@
 #include <functional>
 #include <span>
 
-namespace sigma_edge {
+namespace lob {
 namespace itch {
 
 // ── Message type bytes (ITCH 5.0 §4) ─────────────────────────────────────────
@@ -259,4 +259,4 @@ public:
 using MessageCallback = std::function<void(const ItchMessage&)>;
 
 } // namespace itch
-} // namespace sigma_edge
+} // namespace lob

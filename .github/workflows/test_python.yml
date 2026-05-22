@@ -1,6 +1,6 @@
 # ──────────────────────────────────────────────────────────────────────────────
 #  test_python.yml
-#  Sigma Edge — Python test matrix
+#  Limit Order Book — Python test matrix
 #
 #  Matrix
 #  ──────
@@ -230,7 +230,7 @@ jobs:
           python - <<'EOF'
           import tomllib, pathlib
           data = tomllib.loads(pathlib.Path('pyproject.toml').read_text())
-          assert data['project']['name'] == 'sigma-edge'
+          assert data['project']['name'] == 'limit-order-book'
           assert 'dependencies' in data['project']
           print("✓  pyproject.toml valid")
           EOF

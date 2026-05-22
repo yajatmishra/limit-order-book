@@ -1,6 +1,6 @@
 # ──────────────────────────────────────────────────────────────────────────────
 #  build_cpp.yml
-#  Sigma Edge — C++ build and test matrix
+#  Limit Order Book — C++ build and test matrix
 #
 #  Matrix
 #  ──────
@@ -150,7 +150,7 @@ jobs:
         run: |
           cmake -S . -B build \
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-            -DSIGMA_SANITIZE=${{ matrix.sanitize }} \
+            -DLOB_SANITIZE=${{ matrix.sanitize }} \
             -DCMAKE_C_COMPILER=${{ matrix.cc }} \
             -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} \
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON

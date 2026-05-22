@@ -16,7 +16,7 @@
 #include <string>
 #include <functional>
 
-namespace sigma_edge {
+namespace lob {
 namespace itch {
 
 // ── pcap on-disk structures ───────────────────────────────────────────────────
@@ -76,4 +76,4 @@ private:
 };
 
 } // namespace itch
-} // namespace sigma_edge
+} // namespace lob

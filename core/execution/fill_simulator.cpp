@@ -1,6 +1,6 @@
 #include "fill_simulator.hpp"
 
-namespace sigma_edge {
+namespace lob {
 
 FillSimulator::FillSimulator(const LimitOrderBook& lob,
                              SigmaEventBus& bus,
@@ -117,4 +117,4 @@ uint64_t FillSimulator::compute_fill_price(const SimOrder& order) const noexcept
     }
 }
 
-} // namespace sigma_edge
+} // namespace lob

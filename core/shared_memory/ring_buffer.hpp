@@ -30,7 +30,7 @@
 #include <type_traits>
 #include <new>   // std::hardware_destructive_interference_size (C++17)
 
-namespace sigma_edge {
+namespace lob {
 
 // Portable cache-line size constant.
 #ifdef __cpp_lib_hardware_interference_size
@@ -110,4 +110,4 @@ private:
     T            slots_[Capacity]{};    // ring storage
 };
 
-} // namespace sigma_edge
+} // namespace lob

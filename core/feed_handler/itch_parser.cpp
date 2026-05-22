@@ -1,7 +1,7 @@
 #include "itch_parser.hpp"
 #include <cstring>
 
-namespace sigma_edge {
+namespace lob {
 namespace itch {
 
 // ── Big-endian read helpers ───────────────────────────────────────────────────
@@ -342,4 +342,4 @@ std::optional<ItchMessage> ItchParser::parse(const uint8_t* buf, size_t len) {
 }
 
 } // namespace itch
-} // namespace sigma_edge
+} // namespace lob

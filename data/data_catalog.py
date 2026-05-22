@@ -23,7 +23,7 @@ Schema
 
 Usage
 -----
->>> catalog = DataCatalog("sigma-edge/data/catalog.db")
+>>> catalog = DataCatalog("limit-order-book/data/catalog.db")
 >>> catalog.add(entry)
 >>> results = catalog.find(data_type="itch", date="2024-01-15")
 >>> catalog.status()
@@ -355,7 +355,7 @@ def _main() -> None:
 
     parser = argparse.ArgumentParser(
         prog        = "data_catalog",
-        description = "Inspect and manage the Sigma Edge data catalog",
+        description = "Inspect and manage the limit-order-book data catalog",
     )
     parser.add_argument("--db", default=None, help="Path to catalog.db")
     sub = parser.add_subparsers(dest="cmd")

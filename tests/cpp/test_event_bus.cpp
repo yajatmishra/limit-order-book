@@ -8,7 +8,7 @@
 #include <string>
 #include <cstring>
 
-using namespace sigma_edge;
+using namespace lob;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //  TypedEventBus — basic dispatch

@@ -1,6 +1,6 @@
 #include "order_router.hpp"
 
-namespace sigma_edge {
+namespace lob {
 
 OrderRouter::OrderRouter(SigmaEventBus& bus, Config cfg, Strategy strat)
     : bus_(bus), cfg_(cfg), strategy_(std::move(strat))
@@ -115,4 +115,4 @@ void OrderRouter::reset_stats() noexcept {
     submitted_ = rejected_ = fills_ = 0;
 }
 
-} // namespace sigma_edge
+} // namespace lob

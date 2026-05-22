@@ -22,7 +22,7 @@
 #include <cstdint>
 #include <type_traits>
 
-namespace sigma_edge {
+namespace lob {
 
 // ── SubscriptionHandle ────────────────────────────────────────────────────────
 struct SubscriptionHandle {
@@ -162,4 +162,4 @@ using SigmaEventBus = TypedEventBus<SignalEvent, OrderEvent, FillEvent>;
 // Global singleton (definition in event_bus.cpp).
 SigmaEventBus& get_sigma_bus();
 
-} // namespace sigma_edge
+} // namespace lob

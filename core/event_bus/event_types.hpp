@@ -1,5 +1,5 @@
 #pragma once
-// All application-level event types for the sigma-edge event bus.
+// All application-level event types for the limit-order-book event bus.
 //
 // Architecture note:
 //   Market-data events (TopOfBookUpdate, TradeEvent) travel on the low-latency
@@ -15,7 +15,7 @@
 #include <cstdint>
 #include <variant>
 
-namespace sigma_edge {
+namespace lob {
 
 // ── SignalEvent ───────────────────────────────────────────────────────────────
 // Emitted by a signal generator when it wants to express a directional view.
@@ -75,4 +75,4 @@ struct FillEvent {
 // The variant type dispatched by SigmaEventBus.
 using SigmaEvent = std::variant<SignalEvent, OrderEvent, FillEvent>;
 
-} // namespace sigma_edge
+} // namespace lob

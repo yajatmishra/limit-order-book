@@ -5,7 +5,7 @@
 #include <deque>
 #include <utility>
 
-namespace sigma_edge {
+namespace lob {
 
 // All resting orders at a single price, maintained in FIFO arrival order.
 // Supports O(1) add (push_back), O(n) cancel/execute by order_id.
@@ -36,4 +36,4 @@ private:
     std::deque<Order> orders_;
 };
 
-} // namespace sigma_edge
+} // namespace lob

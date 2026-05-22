@@ -8,7 +8,7 @@
 #include <vector>
 #include <cstdint>
 
-namespace sigma_edge {
+namespace lob {
 
 struct DepthLevel {
     uint64_t price;
@@ -60,4 +60,4 @@ private:
     std::unordered_map<uint64_t, Loc> order_map_;  // order_id → (side, price)
 };
 
-} // namespace sigma_edge
+} // namespace lob

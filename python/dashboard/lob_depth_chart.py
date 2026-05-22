@@ -21,7 +21,7 @@ import plotly.graph_objects as go
 from backtester.engine import LOBSnapshot, DepthLevel
 
 
-# ── Colour palette (matches Sigma Edge dark theme) ────────────────────────────
+# ── Colour palette ────────────────────────────────────────────────────────────
 _BID_FILL   = "rgba( 34, 197,  94, 0.25)"   # green-400, 25 % opacity
 _BID_LINE   = "rgba( 34, 197,  94, 0.90)"
 _ASK_FILL   = "rgba(239,  68,  68, 0.25)"   # red-400, 25 % opacity

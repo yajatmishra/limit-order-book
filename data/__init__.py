@@ -1,5 +1,5 @@
 """
-Sigma Edge — data utilities package
+Limit Order Book — data utilities package
 =====================================
   download_itch    : Fetch NASDAQ TotalView-ITCH 5.0 binary files
   download_daily   : Fetch daily OHLCV bars from Yahoo Finance

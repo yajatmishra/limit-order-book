@@ -187,7 +187,7 @@ class ShmDataSource(DataSource):
 
     Parameters
     ----------
-    shm_name : POSIX shm name (e.g. "/sigma_edge_lob").
+    shm_name : POSIX shm name (e.g. "/lob").
     symbol   : instrument ticker label for the snapshot stream.
     max_snapshots : stop after this many consistent reads (0 = run forever).
     poll_interval_us : microseconds to sleep between polls (default 1000 = 1 ms).
