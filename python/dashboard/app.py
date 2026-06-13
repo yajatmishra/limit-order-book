@@ -126,7 +126,7 @@ def _build_kpi_bar() -> html.Div:
     return html.Div([
         html.Div([
             html.Span(className="pulse"),
-            "SIGMA EDGE",
+            "LIMIT ORDER BOOK",
         ], className="brand", style={
             "fontSize": "18px", "fontWeight": "900", "color": _AMBER,
             "fontFamily": "monospace", "letterSpacing": "0.12em",
@@ -163,14 +163,14 @@ _DESCRIPTION = ("Interactive limit order book session replay — live depth, "
 
 app = dash.Dash(
     __name__,
-    title = "Sigma Edge — Limit Order Book Replay",
+    title = "Limit Order Book: Session Replay",
     update_title = None,   # no "Updating..." title flicker on callbacks
     meta_tags = [
         {"name": "viewport", "content": "width=device-width, initial-scale=1"},
         {"name": "description", "content": _DESCRIPTION},
         {"name": "theme-color", "content": _DARK_BG},
         # Open Graph — nicer link previews when the deployed URL is shared
-        {"property": "og:title", "content": "Sigma Edge — Limit Order Book Replay"},
+        {"property": "og:title", "content": "Limit Order Book: Session Replay"},
         {"property": "og:description", "content": _DESCRIPTION},
         {"property": "og:type", "content": "website"},
     ],

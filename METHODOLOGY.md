@@ -1,6 +1,6 @@
 # Methodology
 
-Mathematical foundations, implementation decisions, and verified empirical results for every major component of the limit order book system. All numerical results are produced by running the code in this repository — see `tests/` for the verification scripts.
+Mathematical foundations, implementation decisions, and verified empirical results for every major component of the limit order book system. All numerical results are produced by running the code in this repository. See the `tests/` directory for the verification scripts.
 
 ---
 
@@ -12,14 +12,14 @@ Mathematical foundations, implementation decisions, and verified empirical resul
 4. [Spread Decomposition](#4-spread-decomposition)
 5. [Queue Model](#5-queue-model)
 6. [Avellaneda-Stoikov Market Making](#6-avellaneda-stoikov-market-making)
-7. [Cointegration — Engle-Granger & Johansen](#7-cointegration--engle-granger--johansen)
+7. [Cointegration: Engle-Granger and Johansen](#7-cointegration-engle-granger-and-johansen)
 8. [Kalman Filter Pairs Trading](#8-kalman-filter-pairs-trading)
 9. [HMM Regime Detection](#9-hmm-regime-detection)
 10. [GARCH-X Volatility Model](#10-garch-x-volatility-model)
 11. [Almgren-Chriss Optimal Execution](#11-almgren-chriss-optimal-execution)
 12. [VWAP / TWAP Execution](#12-vwap--twap-execution)
 13. [Kelly Position Sizing](#13-kelly-position-sizing)
-14. [Risk Metrics — VaR, CVaR, Drawdown](#14-risk-metrics--var-cvar-drawdown)
+14. [Risk Metrics: VaR, CVaR, Drawdown](#14-risk-metrics-var-cvar-drawdown)
 15. [Probabilistic Sharpe Ratio](#15-probabilistic-sharpe-ratio)
 16. [Purged Cross-Validation](#16-purged-cross-validation)
 17. [Backtester Design](#17-backtester-design)
@@ -45,7 +45,7 @@ Each `PriceLevel` holds a `std::list<Order>` for strict FIFO priority within a p
 std::unordered_map<OrderId, std::list<Order>::iterator> cancel_map_;
 ```
 
-gives O(1) cancellation without scanning the queue — critical for NASDAQ, where cancel-to-add ratios exceed 95%.
+gives O(1) cancellation without scanning the queue. This is critical for NASDAQ, where cancel-to-add ratios exceed 95%.
 
 **Complexity:**
 
@@ -77,7 +77,7 @@ while (buf.remaining() >= 3) {
     uint16_t length = buf.read_be16();
     uint8_t  type   = buf.read_u8();
     auto     body   = buf.slice(length - 1);
-    dispatch(type, body);          // switch — no virtual call
+    dispatch(type, body);          // switch, no virtual call
 }
 ```
 
@@ -247,7 +247,7 @@ Assuming a symmetric, serially uncorrelated true-value process, the bid-ask boun
 s_Roll = 2 · √(−Cov(ΔP_t, ΔP_{t−1}))
 ```
 
-If `Cov(ΔP_t, ΔP_{t−1}) ≥ 0` (trending market), the estimator is undefined and returns zero — the spread is not identified from serial covariance alone in this regime.
+If `Cov(ΔP_t, ΔP_{t−1}) ≥ 0` (trending market), the estimator is undefined and returns zero. In this regime the spread is not identified from serial covariance alone.
 
 ### 4.2 Glosten-Milgrom Decomposition
 
@@ -295,7 +295,7 @@ Avellaneda & Stoikov (2008). A market maker posts bid/ask quotes around mid S(t)
 r(q, t) = S(t) − q · γ · σ² · (T − t)
 ```
 
-where γ is the risk-aversion coefficient, σ² is the variance of the mid-price process, and (T−t) is remaining time. A long position (q > 0) lowers the reservation price — the maker is willing to sell cheaper to reduce risk.
+where γ is the risk-aversion coefficient, σ² is the variance of the mid-price process, and (T−t) is remaining time. A long position (q > 0) lowers the reservation price, because the maker is willing to sell cheaper to reduce risk.
 
 ### 6.2 Optimal Spread
 
@@ -312,7 +312,7 @@ b*(t) = r(q, t) − δ*(t)
 a*(t) = r(q, t) + δ*(t)
 ```
 
-The spread `a* − b* = 2δ*` is independent of inventory q. The mid-point `(a* + b*)/2 = r(q, t)` shifts with inventory — this is the mechanism by which inventory risk is managed.
+The spread `a* − b* = 2δ*` is independent of inventory q. The mid-point `(a* + b*)/2 = r(q, t)` shifts with inventory. This is the mechanism by which inventory risk is managed.
 
 **Verified result** (γ=0.1, σ=0.2, k=1.5, mid=100, q=0, t_remaining=0.5):
 
@@ -331,7 +331,7 @@ When q ≠ 0, the reservation price shifts and quotes become asymmetric. With q 
 
 ---
 
-## 7. Cointegration — Engle-Granger & Johansen
+## 7. Cointegration: Engle-Granger and Johansen
 
 ### 7.1 Engle-Granger Two-Step
 
@@ -346,8 +346,8 @@ If ε̂_t is I(0), Y and X are cointegrated with hedge ratio β. The second step
 ```
 Δε̂_t = ρ · ε̂_{t−1} + Σ_{j=1}^{p} φ_j · Δε̂_{t−j} + η_t
 
-H₀: ρ = 0   (unit root — not cointegrated)
-H₁: ρ < 0   (mean-reverting residual — cointegrated)
+H₀: ρ = 0   (unit root, not cointegrated)
+H₁: ρ < 0   (mean-reverting residual, cointegrated)
 ```
 
 The lag order p is selected by AIC or BIC on the augmented regression.
@@ -386,7 +386,7 @@ the half-life (expected time to revert halfway to the mean) is:
 t_{½} = −ln(2) / ln(φ)
 ```
 
-For φ = 0.95: t_{½} ≈ 13.5 periods. This is a key parameter for strategy design — wider z-score entry thresholds are appropriate for slower-reverting pairs.
+For φ = 0.95: t_{½} ≈ 13.5 periods. This is a key parameter for strategy design. Wider z-score entry thresholds are appropriate for slower-reverting pairs.
 
 ---
 
@@ -451,11 +451,11 @@ p(r_t | s_t = k) = N(r_t ; μ_k, σ_k²)
 
 Parameters: θ = {π₀, A, {μ_k, σ_k²}_{k=0}^{K−1}}.
 
-### 9.2 Baum-Welch EM — Log-Space Implementation
+### 9.2 Baum-Welch EM in Log-Space
 
 All computations are in log-space using the log-sum-exp trick to prevent underflow on sequences longer than a few hundred observations.
 
-**E-step — Forward pass:**
+**E-step, forward pass:**
 
 ```
 log α_1(k) = log π_k + log N(r_1; μ_k, σ_k²)
@@ -464,7 +464,7 @@ log α_t(k) = logsumexp_j [log α_{t−1}(j) + log A_{jk}]
              + log N(r_t; μ_k, σ_k²),    t = 2, …, T
 ```
 
-**E-step — Backward pass:**
+**E-step, backward pass:**
 
 ```
 log β_T(k) = 0
@@ -562,7 +562,7 @@ Log-likelihood : 3,621.96
 Converged      : True
 ```
 
-ω recovery is imprecise with T=1,000 — the unconditional variance ω/(1−α−β) is better estimated than ω itself. The persistence α+β is recovered within 0.08% of truth, consistent with typical GARCH finite-sample properties.
+ω recovery is imprecise with T=1,000. The unconditional variance ω/(1−α−β) is better estimated than ω itself. The persistence α+β is recovered within 0.08% of truth, consistent with typical GARCH finite-sample properties.
 
 ---
 
@@ -689,7 +689,7 @@ Full Kelly is optimal under perfect knowledge of p (or μ, σ). In practice, est
 
 ---
 
-## 14. Risk Metrics — VaR, CVaR, Drawdown
+## 14. Risk Metrics: VaR, CVaR, Drawdown
 
 ### 14.1 Value at Risk
 
@@ -711,7 +711,7 @@ VaR_α = −(μ − z_α · σ),    z_{0.05} = −1.645,    z_{0.01} = −2.326
 CVaR_α = −E[r | r ≤ −VaR_α] = −mean(r_t : r_t ≤ −VaR_α)
 ```
 
-CVaR is a coherent risk measure — it satisfies sub-additivity (VaR does not) and captures tail risk beyond the VaR threshold. For Gaussian returns: CVaR_α = μ + σ · φ(z_α) / α, where φ is the standard normal PDF.
+CVaR is a coherent risk measure. It satisfies sub-additivity, which VaR does not, and it captures tail risk beyond the VaR threshold. For Gaussian returns: CVaR_α = μ + σ · φ(z_α) / α, where φ is the standard normal PDF.
 
 ### 14.3 Maximum Drawdown
 
@@ -721,7 +721,7 @@ DD_t = W_t / max_{s ≤ t}(W_s) − 1    (≤ 0 always)
 MaxDD = min_t DD_t
 ```
 
-The Calmar ratio `CAGR / |MaxDD|` measures annualised return per unit of maximum drawdown — the preferred performance metric for strategies with fat-tailed return distributions.
+The Calmar ratio `CAGR / |MaxDD|` measures annualised return per unit of maximum drawdown. It is the preferred performance metric for strategies with fat-tailed return distributions.
 
 ### 14.4 Sortino Ratio
 
@@ -754,10 +754,10 @@ where γ₃ and γ₄ are the skewness and excess kurtosis of returns, and Φ is
 
 ```
 PSR = 0.7843   (78.4% confidence that true SR > 0)
-DSR = 0.7843   (same — no multiple-testing adjustment for single trial)
+DSR = 0.7843   (same, no multiple-testing adjustment for a single trial)
 ```
 
-### 15.2 DSR — Deflated Sharpe Ratio
+### 15.2 DSR: Deflated Sharpe Ratio
 
 The DSR adjusts for multiple testing when the strategy was selected from N_trials candidates. The effective benchmark SR is:
 
@@ -793,8 +793,8 @@ To be 95% confident that a strategy with SR̂=0.78 has a truly positive SR, appr
 
 Standard k-fold cross-validation applied to financial time series suffers from two forms of label leakage:
 
-1. **Label overlap** — if labels use overlapping windows (e.g. T-day forward returns), observations near the train-test boundary contribute to labels in both splits.
-2. **Serial correlation** — even without label overlap, high autocorrelation in features means that test observations immediately after the training window can be predicted by the tail of the training data.
+1. **Label overlap.** If labels use overlapping windows (e.g. T-day forward returns), observations near the train-test boundary contribute to labels in both splits.
+2. **Serial correlation.** Even without label overlap, high autocorrelation in features means that test observations immediately after the training window can be predicted by the tail of the training data.
 
 ### 16.2 Purging
 
@@ -829,7 +829,7 @@ for snap in feed:                        # SnapshotSource or ItchReplayer
     portfolio.update(fills, snap)        # mark-to-market
 ```
 
-This mirrors the live system exactly — when `snap` comes from `ShmReader` and `simulator.process` is replaced by the real exchange gateway, the same strategy code runs unchanged.
+This mirrors the live system exactly. When `snap` comes from `ShmReader` and `simulator.process` is replaced by the real exchange gateway, the same strategy code runs unchanged.
 
 ### 17.2 Portfolio Accounting
 
@@ -849,14 +849,14 @@ Regime 1 (high vol) :  σ = 0.0010/tick,  P(1→0) = 0.020
 Initial price       :  150.00
 ```
 
-`OFIMomentumStrategy` — long when rolling OFI > +300, short when < −300 (window=20 ticks, max_pos=200 shares, lot_size=10).
+`OFIMomentumStrategy` goes long when rolling OFI > +300 and short when it falls below −300 (window=20 ticks, max_pos=200 shares, lot_size=10).
 
 **Verified replay results** (n=2,000 snaps, seed=42):
 
 ```
 Fill count    :  1,379
 Final P&L     :  −$58.60
-Sharpe        :  −14.17    (intentionally uncalibrated — demonstrates pipeline)
+Sharpe        :  −14.17    (intentionally uncalibrated, demonstrates pipeline)
 Sortino       :  −1.25
 Max drawdown  :   0.0614%
 ```

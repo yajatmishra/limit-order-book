@@ -204,7 +204,7 @@ class Tearsheet:
 
         lines = [
             "╔══════════════════════════════════════════════╗",
-            f"║  SIGMA EDGE  ·  Strategy Tearsheet           ║",
+            f"║  LIMIT ORDER BOOK  ·  Strategy Tearsheet     ║",
             f"║  Symbol : {self.symbol:<35s}║",
             "╠══════════════════════════════════════════════╣",
             "║  EQUITY                                      ║",

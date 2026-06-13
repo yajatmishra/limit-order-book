@@ -1,4 +1,4 @@
-# ── Sigma Edge — Pinned Python requirements ───────────────────────────────────
+# ── Pinned Python requirements ────────────────────────────────────────────────
 # Generated for Python 3.10 / 3.11 / 3.12 on Linux x86_64.
 # Regenerate with:
 #   pip-compile pyproject.toml --output-file requirements.txt

@@ -106,7 +106,7 @@ html, body {
   font-size: 0;            /* hide the default "Loading..." text */
 }
 ._dash-loading::before {
-  content: "SIGMA EDGE";
+  content: "LIMIT ORDER BOOK";
   font-size: 14px;
 }
 ._dash-loading::after {
