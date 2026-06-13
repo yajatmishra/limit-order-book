@@ -116,7 +116,6 @@ jobs:
       - name: Pytest
         run: |
           python -m pytest tests/python/ \
-            --pythonpath python \
             --cov=python \
             --cov-report=xml:coverage.xml \
             --cov-report=html:htmlcov \

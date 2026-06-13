@@ -163,7 +163,8 @@ jobs:
       - name: CTest
         working-directory: build
         env:
-          ASAN_OPTIONS:  halt_on_error=1:detect_leaks=1
+          # LeakSanitizer is not supported on macOS — only enable detect_leaks on Linux.
+          ASAN_OPTIONS:  "halt_on_error=1:detect_leaks=${{ startsWith(matrix.os, 'ubuntu') && '1' || '0' }}"
           UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
         run: |
           ctest \

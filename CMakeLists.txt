@@ -21,7 +21,7 @@ endif()
 add_compile_options(
   -Wall -Wextra -Wpedantic -Wshadow
   -Wno-unused-parameter        # suppress in test scaffolding
-  $<$<CONFIG:Release>:-O3 -march=native -DNDEBUG>
+  $<$<CONFIG:Release>:-O3 -DNDEBUG>
   $<$<CONFIG:RelWithDebInfo>:-O2 -g -DNDEBUG>
   $<$<CONFIG:Debug>:-g -O0 -fno-omit-frame-pointer>
 )
