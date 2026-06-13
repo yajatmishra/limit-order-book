@@ -9,7 +9,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![C++17](https://img.shields.io/badge/C%2B%2B-17-00599C?logo=cplusplus&logoColor=white)](CMakeLists.txt)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](pyproject.toml)
-[![Tests](https://img.shields.io/badge/tests-133%20C%2B%2B%20%2B%20416%20Py-success)](tests/)
+[![Tests](https://img.shields.io/badge/tests-133%20C%2B%2B%20%2B%20420%20Py-success)](tests/)
 
 [Live Demo](#live-demo) · [Quick Start](#quick-start) · [Architecture](#architecture) · [Deployment](#deployment) · [Methodology](METHODOLOGY.md)
 
@@ -54,6 +54,33 @@ You can deploy your own copy in a few minutes. See the [Deployment](#deployment)
 | **P&L** | The equity curve, per-bar returns, the underwater drawdown chart, and a metrics box with Sharpe, Sortino, Calmar, MaxDD, PSR, and DSR. |
 | **OFI** | Rolling order-flow imbalance from Cont, Kukanov and Stoikov (2014) with plus and minus one standard deviation bands, plus a scatter of change in mid price against OFI with an OLS fit. |
 | **Regime** | The mid price coloured by a two-state Gaussian HMM Viterbi path, with a stacked posterior-probability area chart below it. |
+
+---
+
+## Strategy Comparison
+
+The dashboard has a second tab, Strategy Comparison, that runs four strategies on a single synthetic market and ranks them by risk-adjusted return. The market embeds a slow trend, a fast mean-reverting component, and a book imbalance that leads returns, so each strategy has real structure to trade. This is a synthetic demonstration of the backtest and reporting pipeline, not a claim of real-world performance.
+
+![Strategy Comparison](docs/images/strategy_comparison.png)
+
+| Strategy | Idea |
+|---|---|
+| Buy & Hold | A passive long position. The volatile baseline the active strategies are measured against. |
+| MA Crossover | Long when a fast moving average is above a slow one, short otherwise. Captures the slow trend. |
+| Mean Reversion | Fade short-term deviations of the mid price from its rolling mean. Captures the fast mean-reverting component. |
+| OFI Momentum | Trade in the direction of smoothed order-book imbalance, which positions ahead of the trend. |
+
+The code is in [`python/backtester/strategy_lab.py`](python/backtester/strategy_lab.py) (the market model, the strategies, and the runner) and [`python/dashboard/strategy_panel.py`](python/dashboard/strategy_panel.py) (the plot). To print the comparison table:
+
+```bash
+PYTHONPATH=python python python/backtester/strategy_lab.py
+```
+
+To regenerate the image above (requires `pip install kaleido`):
+
+```bash
+PYTHONPATH=python python python/dashboard/strategy_panel.py
+```
 
 ---
 
@@ -249,7 +276,7 @@ limit-order-book/
 ├── data/                        # Data utilities (ITCH and daily downloaders, SQLite catalog)
 ├── tests/
 │   ├── cpp/                     # 4 Catch2 test suites (133 tests)
-│   └── python/                  # 9 pytest modules (416 tests)
+│   └── python/                  # 9 pytest modules (420 tests)
 ├── docs/images/                 # Dashboard snapshots
 ├── wsgi.py                      # Production WSGI entry point (gunicorn wsgi:server)
 ├── render.yaml, Procfile, Dockerfile   # Deploy configs
@@ -282,7 +309,7 @@ cd build-debug && ctest --output-on-failure
 
 ```bash
 pip install -e ".[dev]"                           # adds pytest, ruff, and mypy
-PYTHONPATH=python pytest tests/python/ -v          # 416 tests
+PYTHONPATH=python pytest tests/python/ -v          # 420 tests
 PYTHONPATH=python pytest tests/python/ --cov=python --cov-report=html:htmlcov
 ```
 

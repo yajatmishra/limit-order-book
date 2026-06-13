@@ -52,6 +52,8 @@ from dashboard.lob_depth_chart  import build_lob_depth_figure
 from dashboard.ofi_panel        import build_ofi_figure
 from dashboard.pnl_panel        import build_pnl_figure
 from dashboard.regime_panel     import build_regime_figure
+from dashboard.strategy_panel   import build_strategy_comparison_figure
+from backtester.strategy_lab    import run_comparison
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -97,6 +99,12 @@ FIG_REGIME = build_regime_figure(SESSION.mid_prices,
 # Initial LOB depth at tick 0
 FIG_LOB_0  = build_lob_depth_figure(SESSION.snapshots[0], n_levels=5)
 print("✓  Figures ready.", flush=True)
+
+# Strategy comparison (runs four backtests on a structured synthetic market)
+print("⟳  Running strategy comparison …", flush=True)
+COMPARISON   = run_comparison()
+FIG_STRATS   = build_strategy_comparison_figure(COMPARISON)
+print(f"✓  Strategy comparison ready ({len(COMPARISON.runs)} strategies).", flush=True)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -203,7 +211,39 @@ def _slider_marks(n: int) -> dict:
             for i in range(0, n, step)}
 
 
+# ── Tab styling (dark theme) ────────────────────────────────────────────────────
+_TAB_STYLE = {
+    "backgroundColor": _PANEL_BG,
+    "color":           _TEXT_MUT,
+    "border":          f"1px solid {_BORDER}",
+    "borderRadius":    "8px 8px 0 0",
+    "padding":         "8px 16px",
+    "fontWeight":      "600",
+    "fontSize":        "13px",
+}
+_TAB_SELECTED = {
+    **_TAB_STYLE,
+    "backgroundColor": _DARK_BG,
+    "color":           _AMBER,
+    "borderBottom":    f"2px solid {_AMBER}",
+}
+
 app.layout = html.Div([
+
+    # ── Tab bar ───────────────────────────────────────────────────────────────
+    dcc.Tabs(
+        id="main-tabs", value="replay",
+        children=[
+            dcc.Tab(label="Session Replay", value="replay",
+                    style=_TAB_STYLE, selected_style=_TAB_SELECTED),
+            dcc.Tab(label="Strategy Comparison", value="strategies",
+                    style=_TAB_STYLE, selected_style=_TAB_SELECTED),
+        ],
+        style={"marginBottom": "10px"},
+    ),
+
+    # ── Tab 1 body: session replay (kept mounted so its callbacks stay valid) ──
+    html.Div(id="tab-replay-body", children=[
 
     # ── Header KPI bar ────────────────────────────────────────────────────────
     _build_kpi_bar(),
@@ -284,10 +324,28 @@ app.layout = html.Div([
 
     ], className="panel-grid"),
 
+    ]),  # end Session Replay tab body
+
+    # ── Tab 2 body: strategy comparison ───────────────────────────────────────
+    html.Div(id="tab-strategies-body", style={"display": "none"}, children=[
+        html.Div([
+            html.Div(
+                "Four strategies run on one synthetic market that embeds a slow "
+                "trend, a fast mean-reverting component, and a book imbalance "
+                "that leads returns. This is a synthetic demo, not a claim of "
+                "real-world performance.",
+                style={"color": _TEXT_MUT, "fontSize": "12px", "marginBottom": "8px"},
+            ),
+            dcc.Graph(id="graph-strategies", figure=FIG_STRATS,
+                      config={"displayModeBar": False, "responsive": True},
+                      style={"height": "720px"}),
+        ], style=_PANEL_STYLE),
+    ]),
+
     # ── Footer ────────────────────────────────────────────────────────────────
     html.Div([
         html.Span("Synthetic ITCH replay · 2,000 snapshots · seed = 42 · "
-                  "offline demo — no live market data"),
+                  "offline demo, no live market data"),
         html.Span([
             html.A("GitHub", href="https://github.com/yajatmishra/limit-order-book",
                    target="_blank"),
@@ -309,6 +367,20 @@ app.layout = html.Div([
 # ═══════════════════════════════════════════════════════════════════════════════
 # Callbacks
 # ═══════════════════════════════════════════════════════════════════════════════
+
+# ── Tab switch — toggle visibility (both bodies stay mounted) ──────────────────
+@app.callback(
+    Output("tab-replay-body",     "style"),
+    Output("tab-strategies-body", "style"),
+    Input("main-tabs", "value"),
+)
+def switch_tab(tab: str):
+    shown  = {"display": "block"}
+    hidden = {"display": "none"}
+    if tab == "strategies":
+        return hidden, shown
+    return shown, hidden
+
 
 # ── LOB depth chart — updates on slider move ──────────────────────────────────
 @app.callback(

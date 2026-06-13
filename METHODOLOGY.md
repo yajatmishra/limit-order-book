@@ -985,7 +985,7 @@ All results produced by running `tests/` in this repository.
 | Python tests (`tests/python/`) | 3,480 |
 | C++ tests (`tests/cpp/`) | 2,546 |
 | **Total** | **20,418** |
-| Python tests passing | **416 / 416** |
+| Python tests passing | **420 / 420** |
 | C++ tests passing | **133 / 133** |
 | CI matrix jobs | **12** |
 
