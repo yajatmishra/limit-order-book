@@ -25,6 +25,9 @@ plotly>=5.22
 dash>=2.17
 Flask>=3.0            # transitive Dash dependency; pinned for security
 
+# ── Production web server (dashboard deployment) ──────────────────────────────
+gunicorn>=21.2        # WSGI server used by Render / Procfile / Docker (wsgi:server)
+
 # ── HTTP & download utilities ─────────────────────────────────────────────────
 requests>=2.31
 tqdm>=4.66            # progress bars for ITCH downloads

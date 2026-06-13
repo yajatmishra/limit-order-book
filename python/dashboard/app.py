@@ -109,7 +109,7 @@ def _kpi(label: str, value: str, colour: str = _TEXT_MAIN) -> html.Div:
                                 "textTransform": "uppercase", "letterSpacing": "0.05em"}),
         html.Div(value,  style={"fontSize": "16px", "color": colour,
                                 "fontWeight": "700", "fontFamily": "monospace"}),
-    ], style={"padding": "0 14px", "borderRight": f"1px solid {_BORDER}"})
+    ], className="kpi-cell", style={"padding": "0 14px", "borderRight": f"1px solid {_BORDER}"})
 
 
 def _build_kpi_bar() -> html.Div:
@@ -124,10 +124,13 @@ def _build_kpi_bar() -> html.Div:
     sr_color  = _GREEN if r.sharpe >= 1 else (_AMBER if r.sharpe >= 0 else _RED)
 
     return html.Div([
-        html.Div("SIGMA EDGE", style={
+        html.Div([
+            html.Span(className="pulse"),
+            "SIGMA EDGE",
+        ], className="brand", style={
             "fontSize": "18px", "fontWeight": "900", "color": _AMBER,
             "fontFamily": "monospace", "letterSpacing": "0.12em",
-            "paddingRight": "20px",
+            "paddingRight": "20px", "display": "flex", "alignItems": "center",
         }),
         _kpi("Symbol",     SESSION.result.symbol),
         _kpi("Total P&L",  f"${pnl:+,.0f}",       colour=pnl_color),
@@ -139,7 +142,7 @@ def _build_kpi_bar() -> html.Div:
         _kpi("PSR",        flt(t.psr),               colour=_AMBER),
         _kpi("Fills",      str(t.n_fills)),
         _kpi("Bars",       f"{len(SESSION.snapshots):,}"),
-    ], style={
+    ], className="kpi-bar", style={
         "display":         "flex",
         "alignItems":      "center",
         "backgroundColor": _PANEL_BG,
@@ -155,11 +158,22 @@ def _build_kpi_bar() -> html.Div:
 # App layout
 # ═══════════════════════════════════════════════════════════════════════════════
 
+_DESCRIPTION = ("Interactive limit order book session replay — live depth, "
+                "order-flow imbalance, P&L and HMM regime panels.")
+
 app = dash.Dash(
     __name__,
-    title = "Limit Order Book – Session Replay",
-    meta_tags = [{"name": "viewport",
-                  "content": "width=device-width, initial-scale=1"}],
+    title = "Sigma Edge — Limit Order Book Replay",
+    update_title = None,   # no "Updating..." title flicker on callbacks
+    meta_tags = [
+        {"name": "viewport", "content": "width=device-width, initial-scale=1"},
+        {"name": "description", "content": _DESCRIPTION},
+        {"name": "theme-color", "content": _DARK_BG},
+        # Open Graph — nicer link previews when the deployed URL is shared
+        {"property": "og:title", "content": "Sigma Edge — Limit Order Book Replay"},
+        {"property": "og:description", "content": _DESCRIPTION},
+        {"property": "og:type", "content": "website"},
+    ],
 )
 server = app.server   # expose Flask for gunicorn
 
@@ -216,7 +230,7 @@ app.layout = html.Div([
         ),
         dcc.Interval(id="play-interval", interval=200, disabled=True),
         dcc.Store(id="play-state", data={"playing": False}),
-    ], style={
+    ], className="controls-bar", style={
         "display":         "flex",
         "alignItems":      "center",
         "gap":             "8px",
@@ -227,21 +241,27 @@ app.layout = html.Div([
         "marginBottom":    "10px",
     }),
 
-    # ── 2 × 2 panel grid ──────────────────────────────────────────────────────
+    # ── 2 × 2 panel grid (grid template defined in assets/dashboard.css so the
+    #    mobile breakpoint can collapse it to a single column) ─────────────────
     html.Div([
-        # Top-left: LOB depth (dynamic)
+        # Top-left: LOB depth (dynamic) — wrapped in a loading spinner
         html.Div([
-            dcc.Graph(id="graph-lob",
-                      figure=FIG_LOB_0,
-                      config={"displayModeBar": False},
-                      style={"height": "100%"}),
+            dcc.Loading(
+                type="default", color=_AMBER,
+                children=dcc.Graph(
+                    id="graph-lob",
+                    figure=FIG_LOB_0,
+                    config={"displayModeBar": False, "responsive": True},
+                    style={"height": "100%"}),
+                style={"height": "100%"},
+            ),
         ], style={**_PANEL_STYLE, "gridArea": "lob"}),
 
         # Top-right: P&L (static)
         html.Div([
             dcc.Graph(id="graph-pnl",
                       figure=FIG_PNL,
-                      config={"displayModeBar": True,
+                      config={"displayModeBar": True, "responsive": True,
                                "modeBarButtonsToRemove": ["select2d", "lasso2d"]},
                       style={"height": "100%"}),
         ], style={**_PANEL_STYLE, "gridArea": "pnl"}),
@@ -250,7 +270,7 @@ app.layout = html.Div([
         html.Div([
             dcc.Graph(id="graph-ofi",
                       figure=FIG_OFI,
-                      config={"displayModeBar": False},
+                      config={"displayModeBar": False, "responsive": True},
                       style={"height": "100%"}),
         ], style={**_PANEL_STYLE, "gridArea": "ofi"}),
 
@@ -258,17 +278,25 @@ app.layout = html.Div([
         html.Div([
             dcc.Graph(id="graph-regime",
                       figure=FIG_REGIME,
-                      config={"displayModeBar": False},
+                      config={"displayModeBar": False, "responsive": True},
                       style={"height": "100%"}),
         ], style={**_PANEL_STYLE, "gridArea": "regime"}),
 
-    ], style={
-        "display":             "grid",
-        "gridTemplateAreas":   '"lob pnl" "ofi regime"',
-        "gridTemplateColumns": "1fr 1fr",
-        "gridTemplateRows":    "460px 420px",
-        "gap":                 "10px",
-    }),
+    ], className="panel-grid"),
+
+    # ── Footer ────────────────────────────────────────────────────────────────
+    html.Div([
+        html.Span("Synthetic ITCH replay · 2,000 snapshots · seed = 42 · "
+                  "offline demo — no live market data"),
+        html.Span([
+            html.A("GitHub", href="https://github.com/yajatmishra/limit-order-book",
+                   target="_blank"),
+            " · ",
+            html.A("Methodology",
+                   href="https://github.com/yajatmishra/limit-order-book/blob/main/METHODOLOGY.md",
+                   target="_blank"),
+        ]),
+    ], className="app-footer"),
 
 ], style={
     "backgroundColor": _DARK_BG,

@@ -1,0 +1,35 @@
+# VCS / CI
+.git
+.github
+
+# C++ side — not needed for the dashboard image
+core
+tests
+CMakeLists.txt
+Makefile
+third_party
+build
+build-debug
+
+# Data & docs
+data/*.gz
+data/*.parquet
+data/*.db
+docs
+
+# Python caches / build artifacts
+**/__pycache__
+**/*.py[cod]
+**/*.egg-info
+.pytest_cache
+htmlcov
+coverage.xml
+.coverage
+.ruff_cache
+.mypy_cache
+
+# Local env / OS
+.venv
+venv
+.env
+.DS_Store

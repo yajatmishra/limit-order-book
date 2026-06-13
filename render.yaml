@@ -1,0 +1,39 @@
+# ──────────────────────────────────────────────────────────────────────────────
+#  render.yaml — Render Blueprint for the Limit Order Book dashboard
+#
+#  Deploy:
+#    1. Push this repo to GitHub.
+#    2. On render.com → New → Blueprint → connect this repo.
+#       Render reads this file and provisions the web service automatically.
+#    3. First build takes a few minutes (numpy/scipy/pandas wheels). The app
+#       is then live at  https://<service-name>.onrender.com
+#
+#  One-click alternative:
+#    https://render.com/deploy?repo=https://github.com/yajatmishra/limit-order-book
+# ──────────────────────────────────────────────────────────────────────────────
+
+services:
+  - type: web
+    name: limit-order-book-dashboard
+    runtime: python
+    plan: free                       # free instances sleep after ~15 min idle
+    region: oregon
+    branch: main
+    autoDeploy: true
+
+    buildCommand: "pip install --upgrade pip && pip install -r requirements.txt"
+
+    # --preload builds the synthetic session once in the master process and
+    # shares it with workers via copy-on-write; threads handle concurrent
+    # callbacks cheaply (Dash is I/O-light).
+    startCommand: "gunicorn wsgi:server --workers 1 --threads 8 --timeout 120 --preload --bind 0.0.0.0:$PORT"
+
+    healthCheckPath: /
+
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: WEB_CONCURRENCY        # gunicorn reads this; keep at 1 for shared session
+        value: "1"

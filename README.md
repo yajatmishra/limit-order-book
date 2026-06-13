@@ -1,28 +1,114 @@
-# C++17 Limit Order Book
+<div align="center">
 
-> Low-latency C++17 trading core with a full Python microstructure research and execution stack.
+# ⚡ Sigma Edge — C++17 Limit Order Book
 
-[![C++ Build](https://img.shields.io/badge/C%2B%2B-Build%20%26%20Tests-blue?logo=github-actions)](https://github.com/yajatmishra/limit-order-book/actions/workflows/build_cpp.yml)
-[![Python Tests](https://img.shields.io/badge/Python-416%20tests-green?logo=pytest)](https://github.com/yajatmishra/limit-order-book/actions/workflows/test_python.yml)
+**Low-latency C++17 market-data & execution core, paired with a full Python microstructure research stack and a live Plotly Dash dashboard.**
+
+[![C++ Build & Tests](https://github.com/yajatmishra/limit-order-book/actions/workflows/build_cpp.yml/badge.svg)](https://github.com/yajatmishra/limit-order-book/actions/workflows/build_cpp.yml)
+[![Python Tests](https://github.com/yajatmishra/limit-order-book/actions/workflows/test_python.yml/badge.svg)](https://github.com/yajatmishra/limit-order-book/actions/workflows/test_python.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![C++17](https://img.shields.io/badge/C%2B%2B-17-00599C?logo=cplusplus&logoColor=white)](CMakeLists.txt)
+[![Python 3.10–3.12](https://img.shields.io/badge/Python-3.10–3.12-3776AB?logo=python&logoColor=white)](pyproject.toml)
+[![Tests](https://img.shields.io/badge/tests-133%20C%2B%2B%20%2B%20416%20Py-success)](tests/)
+
+[**Live Demo**](#-live-demo) · [Quick Start](#-quick-start) · [Architecture](#-architecture) · [Deployment](#-deployment) · [Methodology](METHODOLOGY.md)
+
+</div>
 
 ---
 
 ## Overview
 
-This project is a quantitative trading research platform built around a low-latency C++17 market data and execution core, integrated with a Python research layer for signal generation, strategy validation, execution optimisation, and risk management.
+A quantitative trading research platform built around a low-latency **C++17** market-data and execution core, integrated with a **Python** research layer for signal generation, strategy validation, execution optimisation, and risk management.
 
-The system ingests raw NASDAQ ITCH 5.0 market data, reconstructs the full limit order book in real time, generates microstructure-based signals, simulates execution, and evaluates performance through an event-driven backtesting pipeline.
+The system ingests raw NASDAQ ITCH 5.0 market data, reconstructs the full limit order book in real time, generates microstructure-based signals, simulates execution, and evaluates performance through an event-driven backtesting pipeline. The two layers communicate through a **shared-memory seqlock interface**, letting Python models consume real-time order-book snapshots with minimal overhead.
 
-**C++17 core** : limit order book reconstruction, binary ITCH 5.0 parsing, lock-free SPSC messaging, seqlock shared-memory snapshot publishing, typed event dispatch, and order/fill simulation.
-
-**Python research stack** : market microstructure models, statistical signal research, walk-forward validation, execution algorithms, risk sizing, and a live Plotly Dash dashboard.
-
-The two layers communicate through a shared-memory seqlock interface, allowing Python models to consume real-time order book snapshots with minimal overhead.
+- **C++17 core** — limit order book reconstruction, binary ITCH 5.0 parsing, lock-free SPSC messaging, seqlock shared-memory snapshot publishing, typed event dispatch, and order/fill simulation.
+- **Python research stack** — market-microstructure models, statistical signal research, walk-forward validation, execution algorithms, risk sizing, and a live Plotly Dash dashboard.
 
 ---
 
-## Architecture
+## ▶ Live Demo
+
+An interactive **session-replay dashboard** — five linked panels rendering a synthetic trading day (2,000 ITCH snapshots, `seed=42`) entirely offline. Dark theme, responsive layout, scrub/play controls.
+
+> **Try it:** deploy your own in ~5 minutes — see [Deployment](#-deployment). Once live it runs at `https://limit-order-book-dashboard.onrender.com`.
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/yajatmishra/limit-order-book)
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/images/lob_depth.png" alt="LOB Depth Chart" /></td>
+    <td width="50%"><img src="docs/images/pnl_panel.png" alt="P&amp;L Panel" /></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/images/ofi_panel.png" alt="OFI Panel" /></td>
+    <td width="50%"><img src="docs/images/regime_panel.png" alt="Regime Panel" /></td>
+  </tr>
+</table>
+
+| Panel | What it shows |
+|---|---|
+| **LOB Depth** | Symmetric mountain chart of resting bid (green) / ask (red) quantity across 5 levels, cumulative depth overlay, mid-price rule. Scrubs across snapshots. |
+| **P&L** | Equity curve, per-bar returns, underwater drawdown, and a monospace metrics box (Sharpe, Sortino, Calmar, MaxDD, PSR, DSR). |
+| **OFI** | Rolling order-flow imbalance (Cont, Kukanov & Stoikov 2014) with ±1σ bands, plus a ΔMid-vs-OFI scatter with OLS fit. |
+| **Regime** | Mid-price coloured by a 2-state Gaussian-HMM Viterbi path, with a stacked posterior-probability area chart. |
+
+---
+
+## 🚀 Quick Start
+
+### Run the dashboard locally
+
+```bash
+git clone https://github.com/yajatmishra/limit-order-book.git
+cd limit-order-book
+pip install -r requirements.txt
+
+# Dev server (Dash) …
+PYTHONPATH=python python python/dashboard/app.py      # → http://localhost:8050
+
+# … or the production server (exactly what Render runs)
+gunicorn wsgi:server --preload --bind 0.0.0.0:8050
+```
+
+### Run with Docker
+
+```bash
+docker build -t lob-dashboard .
+docker run --rm -p 8050:8050 lob-dashboard            # → http://localhost:8050
+```
+
+---
+
+## 🌐 Deployment
+
+The dashboard ships production-ready: a [`wsgi.py`](wsgi.py) entry point exposes the Flask `server`, served by **gunicorn**. Deploy configs are included for the common targets.
+
+### Render (one-click)
+
+This repo contains a [`render.yaml`](render.yaml) Blueprint. Either click the **Deploy to Render** button above, or:
+
+1. Push the repo to GitHub.
+2. On [render.com](https://render.com) → **New → Blueprint** → connect the repo.
+3. Render reads `render.yaml`, installs `requirements.txt`, and starts:
+   ```
+   gunicorn wsgi:server --workers 1 --threads 8 --timeout 120 --preload --bind 0.0.0.0:$PORT
+   ```
+4. First build takes a few minutes (numpy/scipy/pandas wheels); the app is then live at `https://<service-name>.onrender.com`.
+
+> The free plan sleeps after ~15 min idle — the first request after a nap takes a few seconds to wake. `--preload` builds the synthetic session once in the gunicorn master and shares it with workers via copy-on-write.
+
+### Anywhere else
+
+| Target | How |
+|---|---|
+| **Docker** (any cloud / VPS / Cloud Run / Fly.io) | [`Dockerfile`](Dockerfile) — honours `$PORT` |
+| **Heroku-style PaaS** | [`Procfile`](Procfile) — `web: gunicorn wsgi:server …` |
+
+---
+
+## 🏗 Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -77,41 +163,12 @@ The two layers communicate through a shared-memory seqlock interface, allowing P
 
 ---
 
-## Dashboard
+## 🧩 C++ Core
 
-A five-panel Plotly Dash application running entirely offline on synthetic ITCH replay data (2,000 snapshots, seed=42). Dark theme (`#0f172a` background, amber accents).
+<details>
+<summary><b>Limit Order Book</b> — <code>core/lob/</code></summary>
 
-**LOB Depth** — symmetric mountain chart of resting bid (green) and ask (red) quantities across 5 price levels, with cumulative depth overlay and mid-price rule.
-
-![LOB Depth Chart](docs/images/lob_depth.png)
-
-**OFI Panel** — rolling order-flow imbalance (Cont, Kukanov & Stoikov 2014) with ±1σ bands (top) and ΔMid vs OFI scatter with OLS regression line (bottom).
-
-![OFI Panel](docs/images/ofi_panel.png)
-
-**P&L Panel** — equity curve, per-bar returns, and underwater drawdown chart with a monospace metrics box (Sharpe, Sortino, Calmar, MaxDD, PSR, DSR).
-
-![PnL Panel](docs/images/pnl_panel.png)
-
-**Regime Panel** — mid-price coloured by 2-state Gaussian HMM Viterbi path (bearish/bullish) with stacked posterior probability area chart below.
-
-![Regime Panel](docs/images/regime_panel.png)
-
-Run the dashboard:
-
-```bash
-cd limit-order-book
-PYTHONPATH=python python python/dashboard/app.py
-# Open http://localhost:8050
-```
-
----
-
-## C++ Core
-
-### Limit Order Book (`core/lob/`)
-
-Dual-sided price-level LOB. Asks stored in `std::map<Price, PriceLevel>` (ascending), bids in `std::map<Price, PriceLevel, std::greater<>>` (descending). Each `PriceLevel` holds a `std::list<Order>` for FIFO priority and an O(1) `total_qty` counter. An auxiliary `std::unordered_map<OrderId, iterator>` cancel map gives O(1) cancellation — critical for NASDAQ where cancel rates exceed 95%.
+Dual-sided price-level LOB. Asks in `std::map<Price, PriceLevel>` (ascending), bids in `std::map<Price, PriceLevel, std::greater<>>` (descending). Each `PriceLevel` holds a `std::list<Order>` for FIFO priority and an O(1) `total_qty` counter. An auxiliary `std::unordered_map<OrderId, iterator>` cancel map gives O(1) cancellation — critical for NASDAQ where cancel rates exceed 95%.
 
 | Operation | Complexity |
 |---|---|
@@ -120,28 +177,37 @@ Dual-sided price-level LOB. Asks stored in `std::map<Price, PriceLevel>` (ascend
 | `execute_order` (partial or full) | O(1) |
 | `best_bid` / `best_ask` | O(1) — `map::begin()` |
 | `depth(n)` | O(n) |
+</details>
 
-### ITCH 5.0 Parser (`core/feed_handler/`)
+<details>
+<summary><b>ITCH 5.0 Parser</b> — <code>core/feed_handler/</code></summary>
 
 Stateless framing loop over raw binary: `[2-byte BE length][1-byte type][body]`. Body header is always 10 bytes (`stock_locate`, `tracking_number`, `timestamp_hi/lo`). Prices are `uint32` in units of 1/10000. Handles all LOB-relevant message types: Add Order (`A`/`F`), Execute (`E`/`C`), Cancel (`X`), Delete (`D`), Replace (`U`), Trade (`P`/`Q`). No virtual dispatch, no heap allocation per message.
+</details>
 
-### Lock-Free SPSC Ring Buffer (`core/shared_memory/ring_buffer.hpp`)
+<details>
+<summary><b>Lock-Free SPSC Ring Buffer</b> — <code>core/shared_memory/ring_buffer.hpp</code></summary>
 
 64-byte cache-line-aligned `head_` and `tail_` atomics with acquire/release ordering. Capacity N must be a power of 2 (bitmask index). Zero heap allocation after construction. `try_push` / `try_pop` are non-blocking.
+</details>
 
-### Seqlock SHM Writer (`core/shared_memory/shm_writer.cpp`)
+<details>
+<summary><b>Seqlock SHM Writer</b> — <code>core/shared_memory/shm_writer.cpp</code></summary>
 
-Publishes `LOBSnapshot` structs to a POSIX shared memory region using a seqlock: writer increments sequence to odd before write, back to even after. Readers spin until they observe a stable even sequence with no change across their copy window — wait-free reads, correct under concurrent writes.
+Publishes `LOBSnapshot` structs to a POSIX shared-memory region using a seqlock: writer increments sequence to odd before write, back to even after. Readers spin until they observe a stable even sequence with no change across their copy window — wait-free reads, correct under concurrent writes.
+</details>
 
-### TypedEventBus (`core/event_bus/`)
+<details>
+<summary><b>TypedEventBus</b> — <code>core/event_bus/</code></summary>
 
 `std::variant<Fill, Quote, Signal, Order, …>` + `std::unordered_map<type_index, vector<callback>>`. `subscribe<T>(cb)` and `publish(event)` dispatch by `std::type_index` — no virtual functions, no per-event heap allocation.
+</details>
 
 ---
 
-## Python Research Stack
+## 📈 Python Research Stack
 
-See [METHODOLOGY.md](METHODOLOGY.md) for full mathematical derivations and verified numerical results. Summary:
+See [METHODOLOGY.md](METHODOLOGY.md) for full mathematical derivations and verified numerical results.
 
 | Module | Model | Key Result |
 |---|---|---|
@@ -161,7 +227,7 @@ See [METHODOLOGY.md](METHODOLOGY.md) for full mathematical derivations and verif
 
 ---
 
-## Repository Layout
+## 📂 Repository Layout
 
 ```
 limit-order-book/
@@ -178,33 +244,28 @@ limit-order-book/
 │   ├── execution/               # VWAP, TWAP, participation rate, Almgren-Chriss
 │   ├── risk/                    # Kelly, PnL reporter, position tracker, circuit breakers
 │   ├── backtester/              # Engine, Portfolio, Tearsheet
-│   └── dashboard/               # Plotly Dash app + 4 panels
-├── data/                        # Data utilities
-│   ├── download_itch.py         # NASDAQ ITCH FTP downloader
-│   ├── download_daily.py        # Yahoo Finance v8 OHLCV downloader
-│   └── data_catalog.py          # SQLite-backed data catalog
+│   └── dashboard/               # Plotly Dash app + 4 panels + assets/
+├── data/                        # Data utilities (ITCH/daily downloaders, SQLite catalog)
 ├── tests/
 │   ├── cpp/                     # 4 Catch2 test suites (133 tests)
 │   └── python/                  # 9 pytest modules (416 tests)
 ├── docs/images/                 # Dashboard snapshots
+├── wsgi.py                      # Production WSGI entry point (gunicorn wsgi:server)
+├── render.yaml · Procfile · Dockerfile   # Deploy configs
 ├── CMakeLists.txt               # CMake 3.20+, FetchContent Catch2 v3.5.4
 ├── pyproject.toml               # PEP 517/518, pytest + ruff + mypy config
-├── requirements.txt             # Pinned runtime deps
 └── .github/workflows/           # C++ and Python CI matrices (12 jobs)
 ```
 
 ---
 
-## Installation
+## 🛠 Installation (full build)
 
 **Prerequisites:** CMake ≥ 3.20, GCC ≥ 12 or Clang ≥ 14, Python ≥ 3.10.
 
 ### C++ build
 
 ```bash
-git clone https://github.com/yajatmishra/limit-order-book.git
-cd limit-order-book
-
 # Release
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DLOB_SANITIZE=OFF
 cmake --build build --parallel $(nproc)
@@ -216,77 +277,54 @@ cmake --build build-debug --parallel $(nproc)
 cd build-debug && ctest --output-on-failure
 ```
 
-### Python install
+### Python install & tests
 
 ```bash
-pip install -r requirements.txt                  # runtime only
-pip install -e ".[dev]"                          # + pytest, ruff, mypy
-pip install -e ".[dev,research]"                 # + jupyter, matplotlib, sklearn
-```
-
-### Running tests
-
-```bash
-# All 416 Python tests
-PYTHONPATH=python pytest tests/python/ -v
-
-# With coverage
+pip install -e ".[dev]"                           # + pytest, ruff, mypy
+PYTHONPATH=python pytest tests/python/ -v          # 416 tests
 PYTHONPATH=python pytest tests/python/ --cov=python --cov-report=html:htmlcov
-
-# C++ tests (after cmake build above)
-cd build && ctest --output-on-failure
 ```
 
-### CLI entry points
-
-After `pip install -e .`:
+### CLI entry points (after `pip install -e .`)
 
 ```bash
 lob-download-itch  --dest ~/data/itch  --start 2024-01-02 --end 2024-01-31
 lob-download-daily --dest ~/data/daily --symbols AAPL MSFT SPY --start 2020-01-01
 lob-catalog status
-lob-catalog find --data-type itch --date 2024-01-15
-lob-catalog verify --recompute-sha256
 ```
 
 ---
 
-## Verified Performance Numbers
+## ✅ Verified Performance Numbers
 
-All figures are produced by running the code in this repository. See [METHODOLOGY.md](METHODOLOGY.md) for derivations and scripts.
+All figures are produced by running the code in this repository. See [METHODOLOGY.md](METHODOLOGY.md) for derivations.
 
 | Component | Metric | Value |
 |---|---|---|
-| OFI → ΔMid regression | β | 6 × 10⁻⁶ |
-| OFI → ΔMid regression | R² | 0.44 |
+| OFI → ΔMid regression | β · R² | 6 × 10⁻⁶ · 0.44 |
 | HMM K=2, Baum-Welch | Iterations to convergence | 28 |
-| HMM low-vol state | σ/bar | 0.0992% |
-| HMM high-vol state | σ/bar | 0.0303% |
-| GARCH-X (α_true=0.05, β_true=0.93) | α + β recovered | 0.9879 (true 0.98) |
-| Engle-Granger (β_true=1.5, T=2000) | Hedge ratio | 1.4923 |
-| Engle-Granger | ADF statistic | −16.191 |
-| Almgren-Chriss (Q=10k, T=1d) | E[cost] | 2.265 bps |
-| Almgren-Chriss | κ (decay rate) | 30.075 |
+| GARCH-X (α=0.05, β=0.93) | α + β recovered | 0.9879 (true 0.98) |
+| Engle-Granger (β=1.5, T=2000) | Hedge ratio · ADF | 1.4923 · −16.191 |
+| Almgren-Chriss (Q=10k, T=1d) | E[cost] · κ | 2.265 bps · 30.075 |
 | VWAP (10k shares, 390 buckets) | Implementation shortfall | 2.50 bps |
 | Avellaneda-Stoikov (q=0, t=0.5) | Bid-ask spread | 1.2928 |
 | Kelly (p=0.55, payoff=2×) | Full Kelly fraction | 0.3250 |
-| PSR (T=252, SR≈0.78) | Probabilistic Sharpe Ratio | 0.7843 |
-| PSR | Min. track record length | 1,098 obs |
-| Purged CV (5 folds, N=1000, embargo=1%) | Train / test per fold | 790 / 200 |
-| Dashboard replay (2,000 snaps, seed=42) | Fill count | 1,379 |
-| Dashboard replay | Max drawdown | 0.0614% |
+| PSR (T=252, SR≈0.78) | PSR · min track record | 0.7843 · 1,098 obs |
+| Dashboard replay (2,000 snaps, seed=42) | Fills · max drawdown | 1,379 · 0.0614% |
 
 ---
 
-## CI
+## 🔬 CI
 
-**C++ matrix** (`.github/workflows/build_cpp.yml`) — 6 jobs: Ubuntu 22.04 × {GCC-12, Clang-17} × {Release, Debug+ASan+UBSan} and macOS 14 × AppleClang × {Release, Debug+ASan}. Catch2 v3.5.4 via FetchContent, cached by `CMakeLists.txt` hash. CTest results uploaded as XML artifacts.
-
-**Python matrix** (`.github/workflows/test_python.yml`) — 6 jobs: {Ubuntu 22.04, macOS 14} × {Python 3.10, 3.11, 3.12}. Ruff lint (non-blocking on PRs), pytest with `--numprocesses=auto --dist=worksteal`, Codecov upload (Ubuntu/3.12 only), and three offline smoke tests for the data utilities.
+- **C++ matrix** ([`build_cpp.yml`](.github/workflows/build_cpp.yml)) — 6 jobs: Ubuntu 22.04 × {GCC-12, Clang-17} × {Release, Debug+ASan+UBSan} and macOS 14 × AppleClang × {Release, Debug+ASan}. Catch2 v3.5.4 via FetchContent.
+- **Python matrix** ([`test_python.yml`](.github/workflows/test_python.yml)) — 6 jobs: {Ubuntu 22.04, macOS 14} × {Python 3.10, 3.11, 3.12}. Ruff lint, pytest with `pytest-xdist`, Codecov upload, and offline smoke tests for the data utilities.
 
 ---
 
-## References
+## 📚 References
+
+<details>
+<summary>Click to expand</summary>
 
 - Almgren, R. & Chriss, N. (2001). Optimal execution of portfolio transactions. *Journal of Risk*, 3(2), 5–39.
 - Avellaneda, M. & Stoikov, S. (2008). High-frequency trading in a limit order book. *Quantitative Finance*, 8(3), 217–224.
@@ -302,8 +340,10 @@ All figures are produced by running the code in this repository. See [METHODOLOG
 - NASDAQ (2019). *ITCH 5.0 Protocol Specification*.
 - Roll, R. (1984). A simple implicit measure of the effective bid-ask spread. *Journal of Finance*, 39(4), 1127–1139.
 
+</details>
+
 ---
 
-## License
+## 📄 License
 
 MIT — see [LICENSE](LICENSE).
