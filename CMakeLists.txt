@@ -21,9 +21,17 @@ endif()
 add_compile_options(
   -Wall -Wextra -Wpedantic -Wshadow
   -Wno-unused-parameter        # suppress in test scaffolding
-  $<$<CONFIG:Release>:-O3 -DNDEBUG>
-  $<$<CONFIG:RelWithDebInfo>:-O2 -g -DNDEBUG>
-  $<$<CONFIG:Debug>:-g -O0 -fno-omit-frame-pointer>
+  # NOTE: each flag needs its own generator expression — multiple
+  # space-separated flags inside one $<...> are not split correctly
+  # and leak the literal $<...> text to the compiler.
+  "$<$<CONFIG:Release>:-O3>"
+  "$<$<CONFIG:Release>:-DNDEBUG>"
+  "$<$<CONFIG:RelWithDebInfo>:-O2>"
+  "$<$<CONFIG:RelWithDebInfo>:-g>"
+  "$<$<CONFIG:RelWithDebInfo>:-DNDEBUG>"
+  "$<$<CONFIG:Debug>:-g>"
+  "$<$<CONFIG:Debug>:-O0>"
+  "$<$<CONFIG:Debug>:-fno-omit-frame-pointer>"
 )
 
 # Address + Undefined Sanitizers in Debug (disable for CI speed if needed)
