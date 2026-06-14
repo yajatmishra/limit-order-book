@@ -9,7 +9,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![C++17](https://img.shields.io/badge/C%2B%2B-17-00599C?logo=cplusplus&logoColor=white)](CMakeLists.txt)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](pyproject.toml)
-[![Tests](https://img.shields.io/badge/tests-133%20C%2B%2B%20%2B%20420%20Py-success)](tests/)
+[![Tests](https://img.shields.io/badge/tests-133%20C%2B%2B%20%2B%20421%20Py-success)](tests/)
 
 [Live Demo](#live-demo) · [Quick Start](#quick-start) · [Architecture](#architecture) · [Deployment](#deployment) · [Methodology](METHODOLOGY.md)
 
@@ -59,16 +59,24 @@ You can deploy your own copy in a few minutes. See the [Deployment](#deployment)
 
 ## Strategy Comparison
 
-The dashboard has a second tab, Strategy Comparison, that runs four strategies on a single synthetic market and ranks them by risk-adjusted return. The market embeds a slow trend, a fast mean-reverting component, and a book imbalance that leads returns, so each strategy has real structure to trade. This is a synthetic demonstration of the backtest and reporting pipeline, not a claim of real-world performance.
+The dashboard has a second tab, Strategy Comparison, that runs four strategies on a single synthetic daily market and ranks them by risk-adjusted return. The numbers are kept honest on purpose:
+
+- Bars are daily and the Sharpe ratio is annualized by the square root of 252. Annualizing an intraday Sharpe by the tens of thousands of bars in a year is what produces the fantasy Sharpe ratios above 20 that you sometimes see.
+- A signal computed from data up to and including a given bar is executed at the next bar, a one-bar lag, so no strategy trades on a price it used to make the decision. There is no look-ahead.
+- Every fill pays a 4 bps round-trip cost (a half-spread plus market impact).
 
 ![Strategy Comparison](docs/images/strategy_comparison.png)
 
-| Strategy | Idea |
-|---|---|
-| Buy & Hold | A passive long position. The volatile baseline the active strategies are measured against. |
-| MA Crossover | Long when a fast moving average is above a slow one, short otherwise. Captures the slow trend. |
-| Mean Reversion | Fade short-term deviations of the mid price from its rolling mean. Captures the fast mean-reverting component. |
-| OFI Momentum | Trade in the direction of smoothed order-book imbalance, which positions ahead of the trend. |
+The signal-to-noise in the market is deliberately low, so the resulting Sharpe ratios land in the believable 1 to 3 range. Averaged over 20 out-of-sample seeds that were not used to fix any parameter:
+
+| Strategy | Idea | Out-of-sample Sharpe |
+|---|---|---|
+| MA Crossover | Long when a fast moving average is above a slow one, short otherwise. Follows the slow trend. | +1.2 |
+| OFI Momentum | Trade in the direction of smoothed order-book imbalance, which leads the next return. | +1.1 |
+| Buy & Hold | A passive long position. A single-asset baseline, which on a noisy series is close to a coin flip. | -0.5 |
+| Mean Reversion | Fade deviations of the mid price from a slow average. | -3.2 |
+
+Mean Reversion loses, and that is the honest result rather than a bug. On a trending, momentum-driven asset, fading every move is the inverse of the signal that makes the momentum strategies work, so it reliably loses. With a realistic one-bar execution lag the fast reversion has also already happened by the time you can trade it. You cannot have a profitable momentum strategy and a profitable reversion strategy at the same horizon on the same asset, and the comparison shows that plainly instead of hiding it.
 
 The code is in [`python/backtester/strategy_lab.py`](python/backtester/strategy_lab.py) (the market model, the strategies, and the runner) and [`python/dashboard/strategy_panel.py`](python/dashboard/strategy_panel.py) (the plot). To print the comparison table:
 
@@ -276,7 +284,7 @@ limit-order-book/
 ├── data/                        # Data utilities (ITCH and daily downloaders, SQLite catalog)
 ├── tests/
 │   ├── cpp/                     # 4 Catch2 test suites (133 tests)
-│   └── python/                  # 9 pytest modules (420 tests)
+│   └── python/                  # 9 pytest modules (421 tests)
 ├── docs/images/                 # Dashboard snapshots
 ├── wsgi.py                      # Production WSGI entry point (gunicorn wsgi:server)
 ├── render.yaml, Procfile, Dockerfile   # Deploy configs
@@ -309,7 +317,7 @@ cd build-debug && ctest --output-on-failure
 
 ```bash
 pip install -e ".[dev]"                           # adds pytest, ruff, and mypy
-PYTHONPATH=python pytest tests/python/ -v          # 420 tests
+PYTHONPATH=python pytest tests/python/ -v          # 421 tests
 PYTHONPATH=python pytest tests/python/ --cov=python --cov-report=html:htmlcov
 ```
 

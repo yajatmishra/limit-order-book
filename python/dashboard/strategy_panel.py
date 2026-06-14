@@ -65,7 +65,7 @@ def build_strategy_comparison_figure(
             go.Scatter(
                 x=x, y=pct, mode="lines", name=run.name,
                 line=dict(color=run.color, width=2.2),
-                hovertemplate=f"<b>{run.name}</b><br>tick %{{x}}<br>%{{y:.2f}}%<extra></extra>",
+                hovertemplate=f"<b>{run.name}</b><br>day %{{x}}<br>%{{y:.2f}}%<extra></extra>",
             ),
             row=1, col=1,
         )
@@ -112,13 +112,13 @@ def build_strategy_comparison_figure(
     )
 
     # ── Layout ───────────────────────────────────────────────────────────────────
-    fig.update_xaxes(title_text="snapshot (tick)", showgrid=True, gridcolor=_GRID,
+    fig.update_xaxes(title_text="trading day", showgrid=True, gridcolor=_GRID,
                      zeroline=False, color=_TEXT, row=1, col=1)
     fig.update_yaxes(showgrid=True, gridcolor=_GRID, zeroline=False,
                      color=_TEXT, ticksuffix="%", row=1, col=1)
     fig.update_layout(
         title=dict(
-            text=title or "Strategy Comparison  ·  synthetic market (seed 28)",
+            text=title or "Strategy comparison  ·  synthetic daily market",
             font=dict(color=_AMBER, size=16, family="monospace"),
             x=0.01, xanchor="left",
         ),
@@ -126,12 +126,20 @@ def build_strategy_comparison_figure(
         font=dict(color=_TEXT, family="Inter, system-ui, sans-serif"),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1.0,
                     font=dict(color=_TEXT_HI, size=11)),
-        margin=dict(l=50, r=24, t=70, b=40),
+        margin=dict(l=50, r=24, t=70, b=64),
         hovermode="x unified",
+    )
+    # Caption so the Sharpe figures can't be misread: daily bars, honest annualization.
+    fig.add_annotation(
+        x=0.0, y=-0.30, xref="paper", yref="paper", xanchor="left", showarrow=False,
+        text=("Daily bars; Sharpe annualized by sqrt(252). One-bar execution lag and "
+              "4 bps round-trip cost. Synthetic data, single representative seed."),
+        font=dict(color=_TEXT, size=10.5),
     )
     # subplot title styling
     for ann in fig.layout.annotations:
-        ann.font = dict(color=_TEXT, size=12)
+        if ann.text and ann.text.startswith("Cumulative"):
+            ann.font = dict(color=_TEXT, size=12)
     return fig
 
 

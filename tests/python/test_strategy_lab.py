@@ -26,13 +26,30 @@ def test_run_comparison_returns_four_strategies() -> None:
         assert np.isfinite(run.tearsheet.report.sharpe)
 
 
-def test_active_strategies_are_profitable_on_default_seed() -> None:
-    # On the structured synthetic market, every active strategy should beat zero.
-    comp = run_comparison(seed=28)
-    by_name = {r.name: r.tearsheet.report for r in comp.runs}
-    for name in ("MA Crossover", "Mean Reversion", "OFI Momentum"):
-        assert by_name[name].total_return > 0.0, f"{name} should be profitable"
-        assert by_name[name].sharpe > 0.0, f"{name} Sharpe should be positive"
+def _mean_sharpe_by_name(seeds: range, n_snaps: int = 800) -> dict:
+    acc: dict = {}
+    for seed in seeds:
+        for run in run_comparison(n_snaps=n_snaps, seed=seed).runs:
+            acc.setdefault(run.name, []).append(run.tearsheet.report.sharpe)
+    return {k: float(np.mean(v)) for k, v in acc.items()}
+
+
+def test_momentum_strategies_have_realistic_edge() -> None:
+    # Averaged over out-of-sample seeds, the trend and order-flow strategies have
+    # a positive, believable Sharpe. The upper bound guards against a regression
+    # to frequency-inflated annualization (the Sharpe-of-20 artifact).
+    mean = _mean_sharpe_by_name(range(200, 206))
+    assert 0.5 < mean["MA Crossover"] < 5.0
+    assert 0.5 < mean["OFI Momentum"] < 5.0
+    assert all(abs(s) < 8.0 for s in mean.values()), "Sharpe magnitudes must stay believable"
+
+
+def test_mean_reversion_loses_on_trending_asset() -> None:
+    # Honest result, not a bug: fading a trending, momentum-driven asset reliably
+    # loses, and it cannot coexist with a profitable momentum strategy at the same
+    # horizon. Forcing it positive would require look-ahead or curve-fitting.
+    mean = _mean_sharpe_by_name(range(200, 206))
+    assert mean["Mean Reversion"] < 0.0
 
 
 def test_run_comparison_is_deterministic() -> None:
